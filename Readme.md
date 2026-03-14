@@ -21,90 +21,89 @@ A real-time Linux system monitoring application built with C++, Qt6, and CMake. 
 
 ## Install Dependencies
 
+# System Monitor
+
+Linux system monitor with real-time metrics, process management, battery tracking, and screen time — built with C++ and Qt6.
+
+## Install
+
 ```bash
-# Ubuntu / Debian / Linux Mint
+# 1. Install dependencies
 sudo apt update
 sudo apt install cmake g++ qt6-base-dev libqt6charts6-dev libqt6sql6-sqlite \
     libx11-dev libxss-dev libsqlite3-dev
 
-# Fedora
-sudo dnf install cmake gcc-c++ qt6-qtbase-devel qt6-qtcharts-devel \
-    libX11-devel libXScrnSaver-devel sqlite-devel
-
-# Arch Linux
-sudo pacman -S cmake gcc qt6-base qt6-charts libx11 libxss sqlite
-```
-
-## Build & Run
-
-```bash
+# 2. Clone and build
 git clone https://github.com/your-username/system-monitor.git
 cd system-monitor
 mkdir build && cd build
 cmake ..
 make -j$(nproc)
-./SystemMonitor
-```
 
-## Install Background Screen Time Tracker (Optional)
+# 3. Install system-wide (survives reboot)
+sudo cp SystemMonitor /usr/local/bin/SystemMonitor
 
-The screen time tracker runs as a background service so it records app usage even when System Monitor is closed. It uses idle detection to stop counting when you're away.
+# 4. Create desktop shortcut (shows in app menu)
+cat > ~/.local/share/applications/system-monitor.desktop << 'EOF'
+[Desktop Entry]
+Name=System Monitor
+Exec=/usr/local/bin/SystemMonitor
+Type=Application
+Categories=System;Monitor;
+Comment=System monitor with battery and screen time tracking
+EOF
 
-```bash
-# From the project root directory
+# 5. Set up battery monitoring permissions (survives reboot)
+echo 'SUBSYSTEM=="powercap", ACTION=="add", RUN+="/bin/chmod o+r %S%p/energy_uj"' | \
+    sudo tee /etc/udev/rules.d/99-rapl.rules
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+# 6. Install background screen time tracker (runs on boot)
+cd ..
 chmod +x install-tracker.sh
 ./install-tracker.sh
 ```
 
-This will:
-1. Build the lightweight `sysmon-tracker` daemon
-2. Install it to `~/.local/bin/`
-3. Set up a systemd user service that starts on login
-4. Start tracking immediately
+Done. System Monitor is now in your app menu and the screen time tracker starts automatically on every login.
 
-### Manage the Background Tracker
+## Verify Everything Works
 
 ```bash
-# Check if running
+# Check System Monitor runs
+SystemMonitor
+
+# Check screen time tracker is running
 systemctl --user status sysmon-tracker
 
-# View live logs
-journalctl --user -u sysmon-tracker -f
+# Check it starts on boot
+systemctl --user is-enabled sysmon-tracker
 
-# Stop tracking
-systemctl --user stop sysmon-tracker
+# Check RAPL permissions
+cat /sys/class/powercap/intel-rapl:0/energy_uj
+```
 
-# Restart
-systemctl --user restart sysmon-tracker
+## Uninstall
 
-# Disable from starting on login
-systemctl --user disable sysmon-tracker
+```bash
+# Remove System Monitor
+sudo rm /usr/local/bin/SystemMonitor
+rm ~/.local/share/applications/system-monitor.desktop
 
-# Uninstall completely
+# Remove screen time tracker
 systemctl --user stop sysmon-tracker
 systemctl --user disable sysmon-tracker
 rm ~/.local/bin/sysmon-tracker
 rm ~/.config/systemd/user/sysmon-tracker.service
 systemctl --user daemon-reload
+
+# Remove RAPL rule
+sudo rm /etc/udev/rules.d/99-rapl.rules
+
+# Remove data
+rm -rf ~/.local/share/SystemMonitor
 ```
 
-## Battery Monitoring Note
-
-For accurate hardware power readings (Intel RAPL / AMD Energy), you may need to run with elevated permissions:
-
-```bash
-# Option 1: Run as root (not recommended for daily use)
-sudo ./SystemMonitor
-
-# Option 2: Grant read access to RAPL (recommended)
-sudo chmod o+r /sys/class/powercap/intel-rapl:0/energy_uj
-sudo chmod o+r /sys/class/powercap/intel-rapl:0/*/energy_uj
-
-# Option 3: Make it permanent with a udev rule
-echo 'SUBSYSTEM=="powercap", ACTION=="add", RUN+="/bin/chmod o+r %S%p/energy_uj"' | \
-    sudo tee /etc/udev/rules.d/99-rapl.rules
-sudo udevadm control --reload-rules
-```
 
 Without RAPL access, battery drain is estimated from CPU usage and battery power draw.
 
