@@ -66,11 +66,11 @@ include CMakeFiles/SystemMonitor_autogen_timestamp_deps.dir/compiler_depend.make
 # Include the progress variables for this target.
 include CMakeFiles/SystemMonitor_autogen_timestamp_deps.dir/progress.make
 
-CMakeFiles/SystemMonitor_autogen_timestamp_deps: /usr/lib/qt6/libexec/uic
-CMakeFiles/SystemMonitor_autogen_timestamp_deps: /usr/lib/qt6/libexec/moc
 CMakeFiles/SystemMonitor_autogen_timestamp_deps: /usr/lib/x86_64-linux-gnu/libQt6Widgets.so.6.4.2
-CMakeFiles/SystemMonitor_autogen_timestamp_deps: /usr/lib/x86_64-linux-gnu/libQt6Sql.so.6.4.2
 CMakeFiles/SystemMonitor_autogen_timestamp_deps: /usr/lib/x86_64-linux-gnu/libQt6Charts.so.6.4.2
+CMakeFiles/SystemMonitor_autogen_timestamp_deps: /usr/lib/qt6/libexec/moc
+CMakeFiles/SystemMonitor_autogen_timestamp_deps: /usr/lib/qt6/libexec/uic
+CMakeFiles/SystemMonitor_autogen_timestamp_deps: /usr/lib/x86_64-linux-gnu/libQt6Sql.so.6.4.2
 
 SystemMonitor_autogen_timestamp_deps: CMakeFiles/SystemMonitor_autogen_timestamp_deps
 SystemMonitor_autogen_timestamp_deps: CMakeFiles/SystemMonitor_autogen_timestamp_deps.dir/build.make

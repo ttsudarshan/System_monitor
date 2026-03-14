@@ -73,232 +73,232 @@ SystemMonitor_autogen/timestamp: /usr/lib/qt6/libexec/moc
 SystemMonitor_autogen/timestamp: /usr/lib/qt6/libexec/uic
 SystemMonitor_autogen/timestamp: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Automatic MOC and UIC for target SystemMonitor"
-	/usr/bin/cmake -E cmake_autogen /home/sudarshan/System_monitor/build/CMakeFiles/SystemMonitor_autogen.dir/AutogenInfo.json Debug
+	/usr/bin/cmake -E cmake_autogen /home/sudarshan/System_monitor/build/CMakeFiles/SystemMonitor_autogen.dir/AutogenInfo.json ""
 	/usr/bin/cmake -E touch /home/sudarshan/System_monitor/build/SystemMonitor_autogen/timestamp
 
 CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.o: SystemMonitor_autogen/mocs_compilation.cpp
 CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.o -MF CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.o.d -o CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.o -c /home/sudarshan/System_monitor/build/SystemMonitor_autogen/mocs_compilation.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.o -MF CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.o.d -o CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.o -c /home/sudarshan/System_monitor/build/SystemMonitor_autogen/mocs_compilation.cpp
 
 CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/build/SystemMonitor_autogen/mocs_compilation.cpp > CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/build/SystemMonitor_autogen/mocs_compilation.cpp > CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.i
 
 CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/build/SystemMonitor_autogen/mocs_compilation.cpp -o CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/build/SystemMonitor_autogen/mocs_compilation.cpp -o CMakeFiles/SystemMonitor.dir/SystemMonitor_autogen/mocs_compilation.cpp.s
 
 CMakeFiles/SystemMonitor.dir/src/main.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/src/main.cpp.o: /home/sudarshan/System_monitor/src/main.cpp
 CMakeFiles/SystemMonitor.dir/src/main.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/SystemMonitor.dir/src/main.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/main.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/main.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/main.cpp.o -c /home/sudarshan/System_monitor/src/main.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/main.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/main.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/main.cpp.o -c /home/sudarshan/System_monitor/src/main.cpp
 
 CMakeFiles/SystemMonitor.dir/src/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/src/main.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/main.cpp > CMakeFiles/SystemMonitor.dir/src/main.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/main.cpp > CMakeFiles/SystemMonitor.dir/src/main.cpp.i
 
 CMakeFiles/SystemMonitor.dir/src/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/src/main.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/main.cpp -o CMakeFiles/SystemMonitor.dir/src/main.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/main.cpp -o CMakeFiles/SystemMonitor.dir/src/main.cpp.s
 
 CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.o: /home/sudarshan/System_monitor/src/MainWindow.cpp
 CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.o -c /home/sudarshan/System_monitor/src/MainWindow.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.o -c /home/sudarshan/System_monitor/src/MainWindow.cpp
 
 CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/MainWindow.cpp > CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/MainWindow.cpp > CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.i
 
 CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/MainWindow.cpp -o CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/MainWindow.cpp -o CMakeFiles/SystemMonitor.dir/src/MainWindow.cpp.s
 
 CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.o: /home/sudarshan/System_monitor/src/monitors/CpuMonitor.cpp
 CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.o -c /home/sudarshan/System_monitor/src/monitors/CpuMonitor.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.o -c /home/sudarshan/System_monitor/src/monitors/CpuMonitor.cpp
 
 CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/CpuMonitor.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/CpuMonitor.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.i
 
 CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/CpuMonitor.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/CpuMonitor.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/CpuMonitor.cpp.s
 
 CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.o: /home/sudarshan/System_monitor/src/monitors/MemoryMonitor.cpp
 CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.o -c /home/sudarshan/System_monitor/src/monitors/MemoryMonitor.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.o -c /home/sudarshan/System_monitor/src/monitors/MemoryMonitor.cpp
 
 CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/MemoryMonitor.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/MemoryMonitor.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.i
 
 CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/MemoryMonitor.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/MemoryMonitor.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/MemoryMonitor.cpp.s
 
 CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.o: /home/sudarshan/System_monitor/src/monitors/DiskMonitor.cpp
 CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.o -c /home/sudarshan/System_monitor/src/monitors/DiskMonitor.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.o -c /home/sudarshan/System_monitor/src/monitors/DiskMonitor.cpp
 
 CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/DiskMonitor.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/DiskMonitor.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.i
 
 CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/DiskMonitor.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/DiskMonitor.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/DiskMonitor.cpp.s
 
 CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.o: /home/sudarshan/System_monitor/src/monitors/NetworkMonitor.cpp
 CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.o -c /home/sudarshan/System_monitor/src/monitors/NetworkMonitor.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.o -c /home/sudarshan/System_monitor/src/monitors/NetworkMonitor.cpp
 
 CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/NetworkMonitor.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/NetworkMonitor.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.i
 
 CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/NetworkMonitor.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/NetworkMonitor.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/NetworkMonitor.cpp.s
 
 CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.o: /home/sudarshan/System_monitor/src/monitors/BatteryMonitor.cpp
 CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.o -c /home/sudarshan/System_monitor/src/monitors/BatteryMonitor.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.o -c /home/sudarshan/System_monitor/src/monitors/BatteryMonitor.cpp
 
 CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/BatteryMonitor.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/BatteryMonitor.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.i
 
 CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/BatteryMonitor.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/BatteryMonitor.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/BatteryMonitor.cpp.s
 
 CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.o: /home/sudarshan/System_monitor/src/monitors/BatteryTracker.cpp
 CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.o -c /home/sudarshan/System_monitor/src/monitors/BatteryTracker.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.o -c /home/sudarshan/System_monitor/src/monitors/BatteryTracker.cpp
 
 CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/BatteryTracker.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/BatteryTracker.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.i
 
 CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/BatteryTracker.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/BatteryTracker.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/BatteryTracker.cpp.s
 
 CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.o: /home/sudarshan/System_monitor/src/monitors/EnergyMonitor.cpp
 CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.o -c /home/sudarshan/System_monitor/src/monitors/EnergyMonitor.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.o -c /home/sudarshan/System_monitor/src/monitors/EnergyMonitor.cpp
 
 CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/EnergyMonitor.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/EnergyMonitor.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.i
 
 CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/EnergyMonitor.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/EnergyMonitor.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/EnergyMonitor.cpp.s
 
 CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.o: /home/sudarshan/System_monitor/src/monitors/ScreenTimeTracker.cpp
 CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.o -c /home/sudarshan/System_monitor/src/monitors/ScreenTimeTracker.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.o -c /home/sudarshan/System_monitor/src/monitors/ScreenTimeTracker.cpp
 
 CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/ScreenTimeTracker.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/monitors/ScreenTimeTracker.cpp > CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.i
 
 CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/ScreenTimeTracker.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/monitors/ScreenTimeTracker.cpp -o CMakeFiles/SystemMonitor.dir/src/monitors/ScreenTimeTracker.cpp.s
 
 CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.o: /home/sudarshan/System_monitor/src/widgets/MetricsTab.cpp
 CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.o -c /home/sudarshan/System_monitor/src/widgets/MetricsTab.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.o -c /home/sudarshan/System_monitor/src/widgets/MetricsTab.cpp
 
 CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/widgets/MetricsTab.cpp > CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/widgets/MetricsTab.cpp > CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.i
 
 CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/widgets/MetricsTab.cpp -o CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/widgets/MetricsTab.cpp -o CMakeFiles/SystemMonitor.dir/src/widgets/MetricsTab.cpp.s
 
 CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.o: /home/sudarshan/System_monitor/src/widgets/ProcessesTab.cpp
 CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.o -c /home/sudarshan/System_monitor/src/widgets/ProcessesTab.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.o -c /home/sudarshan/System_monitor/src/widgets/ProcessesTab.cpp
 
 CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/widgets/ProcessesTab.cpp > CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/widgets/ProcessesTab.cpp > CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.i
 
 CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/widgets/ProcessesTab.cpp -o CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/widgets/ProcessesTab.cpp -o CMakeFiles/SystemMonitor.dir/src/widgets/ProcessesTab.cpp.s
 
 CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.o: /home/sudarshan/System_monitor/src/widgets/LogsTab.cpp
 CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.o -c /home/sudarshan/System_monitor/src/widgets/LogsTab.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.o -c /home/sudarshan/System_monitor/src/widgets/LogsTab.cpp
 
 CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/widgets/LogsTab.cpp > CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/widgets/LogsTab.cpp > CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.i
 
 CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/widgets/LogsTab.cpp -o CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/widgets/LogsTab.cpp -o CMakeFiles/SystemMonitor.dir/src/widgets/LogsTab.cpp.s
 
 CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.o: /home/sudarshan/System_monitor/src/widgets/BatteryStatsTab.cpp
 CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.o -c /home/sudarshan/System_monitor/src/widgets/BatteryStatsTab.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.o -c /home/sudarshan/System_monitor/src/widgets/BatteryStatsTab.cpp
 
 CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/widgets/BatteryStatsTab.cpp > CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/widgets/BatteryStatsTab.cpp > CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.i
 
 CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/widgets/BatteryStatsTab.cpp -o CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/widgets/BatteryStatsTab.cpp -o CMakeFiles/SystemMonitor.dir/src/widgets/BatteryStatsTab.cpp.s
 
 CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.o: CMakeFiles/SystemMonitor.dir/flags.make
 CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.o: /home/sudarshan/System_monitor/src/widgets/ScreenTimeTab.cpp
 CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.o: CMakeFiles/SystemMonitor.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sudarshan/System_monitor/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.o -c /home/sudarshan/System_monitor/src/widgets/ScreenTimeTab.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.o -MF CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.o.d -o CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.o -c /home/sudarshan/System_monitor/src/widgets/ScreenTimeTab.cpp
 
 CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/widgets/ScreenTimeTab.cpp > CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sudarshan/System_monitor/src/widgets/ScreenTimeTab.cpp > CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.i
 
 CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/widgets/ScreenTimeTab.cpp -o CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sudarshan/System_monitor/src/widgets/ScreenTimeTab.cpp -o CMakeFiles/SystemMonitor.dir/src/widgets/ScreenTimeTab.cpp.s
 
 # Object files for target SystemMonitor
 SystemMonitor_OBJECTS = \

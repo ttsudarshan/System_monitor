@@ -303,21 +303,29 @@
   /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
   /usr/include/x86_64-linux-gnu/gnu/stubs.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/QAbstractAxis \
+  /usr/include/x86_64-linux-gnu/qt6/QtCharts/QAbstractBarSeries \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/QAbstractSeries \
+  /usr/include/x86_64-linux-gnu/qt6/QtCharts/QBarCategoryAxis \
+  /usr/include/x86_64-linux-gnu/qt6/QtCharts/QBarSet \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/QChart \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/QChartGlobal \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/QChartView \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/QLegend \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/QLineSeries \
+  /usr/include/x86_64-linux-gnu/qt6/QtCharts/QStackedBarSeries \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/QValueAxis \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/QXYSeries \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/qabstractaxis.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtCharts/qabstractbarseries.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/qabstractseries.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtCharts/qbarcategoryaxis.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtCharts/qbarset.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/qchart.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/qchartglobal.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/qchartview.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/qlegend.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/qlineseries.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtCharts/qstackedbarseries.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/qtcharts-config.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/qtchartsexports.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCharts/qvalueaxis.h \
@@ -328,6 +336,7 @@
   /usr/include/x86_64-linux-gnu/qt6/QtCore/QRect \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/QSize \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/QSizeF \
+  /usr/include/x86_64-linux-gnu/qt6/QtCore/QStringList \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/QTimer \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/QVariant \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/qabstractitemmodel.h \

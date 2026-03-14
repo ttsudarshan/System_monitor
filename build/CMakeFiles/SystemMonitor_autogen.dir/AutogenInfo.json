@@ -311,6 +311,7 @@
 		"QT_CHARTS_LIB",
 		"QT_CORE_LIB",
 		"QT_GUI_LIB",
+		"QT_NO_DEBUG",
 		"QT_OPENGLWIDGETS_LIB",
 		"QT_OPENGL_LIB",
 		"QT_SQL_LIB",
@@ -355,7 +356,7 @@
 	"MOC_PATH_PREFIX" : false,
 	"MOC_PREDEFS_CMD" : 
 	[
-		"/usr/bin/g++",
+		"/usr/bin/c++",
 		"-std=gnu++17",
 		"-dM",
 		"-E",

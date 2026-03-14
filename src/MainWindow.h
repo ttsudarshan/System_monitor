@@ -6,8 +6,16 @@
 #include "widgets/MetricsTab.h"
 #include "widgets/ProcessesTab.h"
 #include "widgets/LogsTab.h"
+#include "widgets/BatteryStatsTab.h"
+#include "widgets/ScreenTimeTab.h"
 #include "monitors/CpuMonitor.h"
 #include "monitors/MemoryMonitor.h"
+#include "monitors/DiskMonitor.h"
+#include "monitors/NetworkMonitor.h"
+#include "monitors/BatteryMonitor.h"
+#include "monitors/BatteryTracker.h"
+#include "monitors/EnergyMonitor.h"
+#include "monitors/ScreenTimeTracker.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -24,10 +32,18 @@ private:
     MetricsTab *metricsTab;
     ProcessesTab *processesTab;
     LogsTab *logsTab;
+    BatteryStatsTab *batteryStatsTab;
+    ScreenTimeTab *screenTimeTab;
 
     CpuMonitor cpuMonitor;
     MemoryMonitor memMonitor;
+    DiskMonitor diskMonitor;
+    NetworkMonitor netMonitor;
+    BatteryMonitor battMonitor;
+    BatteryTracker battTracker;
+    EnergyMonitor energyMonitor;
+    ScreenTimeTracker screenTracker;
 
     QTimer *refreshTimer;
-    static constexpr int REFRESH_MS = 1500; // 1.5s refresh
+    static constexpr int REFRESH_MS = 1500;
 };
