@@ -272,6 +272,8 @@ void ScreenTimeTab::buildAppList() {
         int sec = showingWeek ? s.weekSeconds : s.todaySeconds;
         if (sec <= 0) continue;
 
+        double pct = (maxSec > 0) ? (static_cast<double>(sec) / maxSec) * 100.0 : 0;
+
         auto *item = new QTreeWidgetItem();
 
         // Name
@@ -286,18 +288,30 @@ void ScreenTimeTab::buildAppList() {
         if (barLen < 1) barLen = 1;
         item->setText(1, QString(barLen, QChar(0x2588)));
 
-        // Bar color: gradient by rank
+        // Color code bars by usage intensity
         QColor bc;
         int rank = appList->topLevelItemCount();
-        if (rank == 0) bc = QColor(0, 175, 255);       // bright cyan
-        else if (rank == 1) bc = QColor(90, 200, 250);  // lighter cyan
-        else if (rank == 2) bc = QColor(120, 120, 130);
-        else bc = QColor(72, 72, 74);
+        int totalRef = showingWeek ? cachedWeekSec : cachedTodaySec;
+        double sharePct = (totalRef > 0) ? (static_cast<double>(sec) / totalRef) * 100.0 : 0;
+
+        if (sharePct > 35) {
+            bc = QColor(255, 69, 58);       // Red — heavy usage
+            item->setForeground(0, QColor(255, 120, 110));
+        } else if (sharePct > 25) {
+            bc = QColor(255, 159, 10);      // Orange
+            item->setForeground(0, QColor(255, 200, 100));
+        } else if (sharePct > 15) {
+            bc = QColor(0, 175, 255);       // Cyan — moderate
+        } else if (sharePct > 8) {
+            bc = QColor(48, 209, 88);       // Green — light
+        } else {
+            bc = QColor(72, 72, 74);        // Gray — minimal
+        }
         item->setForeground(1, bc);
 
-        // Time
+        // Time — color matches bar
         item->setText(2, fmtTime(sec));
-        item->setForeground(2, QColor(142, 142, 147));
+        item->setForeground(2, bc.lighter(130));
         item->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
 
         appList->addTopLevelItem(item);
@@ -310,25 +324,50 @@ void ScreenTimeTab::refresh() {
         bigTimeLabel->setText(fmtTime(cachedDailyAvg));
         totalTimeLabel->setText(fmtTime(cachedWeekSec));
 
-        // Show date range: "Mar 7 – Mar 13"
         QDate start = QDate::currentDate().addDays(-6);
         QDate end = QDate::currentDate();
         changeLabel->setText(QString("%1 – %2")
             .arg(start.toString("MMM d"))
             .arg(end.toString("MMM d")));
+        changeLabel->setStyleSheet("color:#30d158; font-size:12px;");
+
+        // Color big time by daily average level
+        if (cachedDailyAvg > 6 * 3600)
+            bigTimeLabel->setStyleSheet("color:#ff453a; font-size:34px; font-weight:bold;");
+        else if (cachedDailyAvg > 4 * 3600)
+            bigTimeLabel->setStyleSheet("color:#ff9f0a; font-size:34px; font-weight:bold;");
+        else if (cachedDailyAvg > 2 * 3600)
+            bigTimeLabel->setStyleSheet("color:#fff; font-size:34px; font-weight:bold;");
+        else
+            bigTimeLabel->setStyleSheet("color:#30d158; font-size:34px; font-weight:bold;");
+
     } else {
         periodLabel->setText(QDate::currentDate().toString("'Today,' MMMM d"));
         bigTimeLabel->setText(fmtTime(cachedTodaySec));
         totalTimeLabel->setText(fmtTime(cachedTodaySec));
 
+        // Color big time by today's level
+        if (cachedTodaySec > 8 * 3600)
+            bigTimeLabel->setStyleSheet("color:#ff453a; font-size:34px; font-weight:bold;");
+        else if (cachedTodaySec > 5 * 3600)
+            bigTimeLabel->setStyleSheet("color:#ff9f0a; font-size:34px; font-weight:bold;");
+        else if (cachedTodaySec > 2 * 3600)
+            bigTimeLabel->setStyleSheet("color:#fff; font-size:34px; font-weight:bold;");
+        else
+            bigTimeLabel->setStyleSheet("color:#30d158; font-size:34px; font-weight:bold;");
+
         if (cachedDailyAvg > 0) {
             int diff = cachedTodaySec - cachedDailyAvg;
-            if (diff > 0)
-                changeLabel->setText(QString("+%1 vs avg").arg(fmtTime(diff)));
-            else if (diff < 0)
-                changeLabel->setText(QString("-%1 vs avg").arg(fmtTime(-diff)));
-            else
-                changeLabel->setText("= avg");
+            if (diff > 0) {
+                changeLabel->setText(QString("↑ %1 above avg").arg(fmtTime(diff)));
+                changeLabel->setStyleSheet("color:#ff453a; font-size:12px;");
+            } else if (diff < 0) {
+                changeLabel->setText(QString("↓ %1 below avg").arg(fmtTime(-diff)));
+                changeLabel->setStyleSheet("color:#30d158; font-size:12px;");
+            } else {
+                changeLabel->setText("= daily average");
+                changeLabel->setStyleSheet("color:#8e8e93; font-size:12px;");
+            }
         } else {
             changeLabel->setText("");
         }
