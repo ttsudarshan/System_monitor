@@ -36,7 +36,6 @@ set(HEADERS
     src/monitors/BatteryMonitor.h
     src/monitors/BatteryTracker.h
     src/monitors/EnergyMonitor.h
-    src/monitors/EnergyMonitor.h
     src/monitors/ScreenTimeTracker.h
     src/widgets/MetricsTab.h
     src/widgets/ProcessesTab.h
@@ -54,4 +53,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Charts
     Qt6::Sql
     X11
+    Xss
 )

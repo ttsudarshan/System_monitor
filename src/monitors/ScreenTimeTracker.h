@@ -4,6 +4,7 @@
 #include <vector>
 #include <unordered_map>
 #include <cstdint>
+#include <chrono>
 #include <QtSql/QSqlDatabase>
 
 class ScreenTimeTracker {
@@ -45,6 +46,7 @@ public:
 private:
     QSqlDatabase db;
     std::string currentFocusApp;
+    std::chrono::steady_clock::time_point lastTickTime;
 
     void initDb();
     std::string getFocusedAppName();

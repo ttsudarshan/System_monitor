@@ -1,0 +1,5 @@
+/home/sudarshan/System_monitor/build/CMakeFiles/SystemMonitor.dir
+/home/sudarshan/System_monitor/build/CMakeFiles/edit_cache.dir
+/home/sudarshan/System_monitor/build/CMakeFiles/rebuild_cache.dir
+/home/sudarshan/System_monitor/build/CMakeFiles/SystemMonitor_autogen_timestamp_deps.dir
+/home/sudarshan/System_monitor/build/CMakeFiles/SystemMonitor_autogen.dir
