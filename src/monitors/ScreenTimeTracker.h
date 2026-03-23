@@ -7,6 +7,11 @@
 #include <chrono>
 #include <QtSql/QSqlDatabase>
 
+// Forward-declare Display to avoid pulling X11 headers into every TU
+// that includes this header.
+struct _XDisplay;
+typedef struct _XDisplay Display;
+
 class ScreenTimeTracker {
 public:
     ScreenTimeTracker();
@@ -49,6 +54,11 @@ private:
     std::chrono::steady_clock::time_point lastTickTime;
 
     void initDb();
+
+    // Returns true only when the X screen saver has actually blanked/locked
+    // the display — NOT merely because the user is idle (e.g. watching video).
+    bool isScreenBlanked(Display *dpy) const;
+
     std::string getFocusedAppName();
     std::string normalizeAppName(const std::string &name);
     void recordTick(const std::string &appName, int seconds);

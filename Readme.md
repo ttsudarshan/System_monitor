@@ -40,10 +40,11 @@ mkdir build && cd build
 cmake ..
 make -j$(nproc)
 
-# 3. Install system-wide (survives reboot)
+# 3. Install system-wide to make it survive reboot
 sudo cp SystemMonitor /usr/local/bin/SystemMonitor
 
 # 4. Create desktop shortcut (shows in app menu)
+chmod +x ~/.local/share/applications/system-monitor.desktop
 cat > ~/.local/share/applications/system-monitor.desktop << 'EOF'
 [Desktop Entry]
 Name=System Monitor
@@ -53,13 +54,13 @@ Categories=System;Monitor;
 Comment=System monitor with battery and screen time tracking
 EOF
 
-# 5. Set up battery monitoring permissions (survives reboot)
+# 5. Set up battery monitoring permissions 
 echo 'SUBSYSTEM=="powercap", ACTION=="add", RUN+="/bin/chmod o+r %S%p/energy_uj"' | \
     sudo tee /etc/udev/rules.d/99-rapl.rules
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 
-# 6. Install background screen time tracker (runs on boot)
+# 6. Install background screen time tracker 
 cd ..
 chmod +x install-tracker.sh
 ./install-tracker.sh

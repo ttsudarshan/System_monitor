@@ -26,7 +26,9 @@
 
 static volatile bool running = true;
 static const int TICK_MS = 1000; // Check every 1 second
-static const int IDLE_THRESHOLD_MS = 90000; // 90 seconds idle = stop counting
+
+// REMOVED: IDLE_THRESHOLD_MS — idle time is no longer used to stop counting.
+// Mobile-style tracking: screen ON = time counted, screen BLANKED/LOCKED = stop.
 
 void sigHandler(int) { running = false; }
 
@@ -113,22 +115,33 @@ std::string getFocusedApp(Display *dpy) {
     return "";
 }
 
-// ─── X11: Get Idle Time ─────────────────────────────────────────
+// ─── X11: Screen Blanked Check ──────────────────────────────────
+//
+// FIX: Replaces the old getIdleMs() + threshold approach.
+//
+// Returns true ONLY when the display is actually blanked or locked.
+// A user watching YouTube with no mouse movement returns FALSE —
+// the screen is still on, so time keeps counting (mobile-style).
+//
+// XScreenSaver state values:
+//   ScreenSaverOff      (0) — screen on, user present     → TRACK
+//   ScreenSaverOn       (1) — screen blanked / locked      → STOP
+//   ScreenSaverCycle    (2) — cycling screen saver active  → STOP
+//   ScreenSaverDisabled (3) — no screen saver installed    → TRACK
 
-long getIdleMs(Display *dpy) {
-    XScreenSaverInfo *info = XScreenSaverAllocInfo();
-    if (!info) return 0;
-
+bool isScreenBlanked(Display *dpy) {
     int eventBase, errorBase;
-    if (!XScreenSaverQueryExtension(dpy, &eventBase, &errorBase)) {
-        XFree(info);
-        return 0;
-    }
+    if (!XScreenSaverQueryExtension(dpy, &eventBase, &errorBase))
+        return false; // Extension absent — assume screen is on
+
+    XScreenSaverInfo *info = XScreenSaverAllocInfo();
+    if (!info) return false;
 
     XScreenSaverQueryInfo(dpy, DefaultRootWindow(dpy), info);
-    long idle = info->idle; // milliseconds since last input
+    int state = info->state;
     XFree(info);
-    return idle;
+
+    return (state == ScreenSaverOn || state == ScreenSaverCycle);
 }
 
 // ─── Database ───────────────────────────────────────────────────
@@ -228,7 +241,7 @@ int main() {
 
     std::cout << "sysmon-tracker started (PID " << getpid() << ")" << std::endl;
     std::cout << "DB: " << getDbPath() << std::endl;
-    std::cout << "Idle threshold: " << IDLE_THRESHOLD_MS / 1000 << "s" << std::endl;
+    std::cout << "Mode: screen-state (tracks during passive use like video watching)" << std::endl;
 
     auto lastTick = std::chrono::steady_clock::now();
     std::string lastApp;
@@ -253,10 +266,9 @@ int main() {
             lastDate = today;
         }
 
-        // Check idle
-        long idleMs = getIdleMs(dpy);
-        if (idleMs > IDLE_THRESHOLD_MS) {
-            // User is idle — flush and don't count
+        // FIX: Only pause tracking when the screen is actually blanked or locked.
+        // Replaces the old idle-time threshold that broke passive video watching.
+        if (isScreenBlanked(dpy)) {
             if (!lastApp.empty() && accumSeconds > 0) {
                 recordTime(db, lastApp, today, accumSeconds);
                 accumSeconds = 0;
@@ -265,13 +277,10 @@ int main() {
             continue;
         }
 
-        // Screen is locked? Check if screensaver is active
-        // If idle is increasing but below threshold, user is still present
-
         // Get focused app
         std::string app = getFocusedApp(dpy);
         if (app.empty()) {
-            // No focused window (maybe screen locked or switching)
+            // No focused window (maybe switching desktops etc.)
             if (!lastApp.empty() && accumSeconds > 0) {
                 recordTime(db, lastApp, today, accumSeconds);
                 accumSeconds = 0;

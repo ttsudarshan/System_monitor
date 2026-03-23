@@ -18,7 +18,17 @@
 #include <cstring>
 #include <chrono>
 
-static const int IDLE_THRESHOLD_MS = 90000; // 90 seconds
+// ---------------------------------------------------------------------------
+// FIX: Mobile-style tracking — count time whenever the screen is ON,
+//      regardless of mouse/keyboard idle time.
+//      Only stop counting when the screen is actually blanked or locked.
+//
+// XScreenSaver states:
+//   ScreenSaverOff      (0) — screen saver not active, display on  ← TRACK
+//   ScreenSaverOn       (1) — screen blanked / locked              ← STOP
+//   ScreenSaverCycle    (2) — cycling patterns                     ← STOP
+//   ScreenSaverDisabled (3) — no screen saver installed            ← TRACK
+// ---------------------------------------------------------------------------
 
 ScreenTimeTracker::ScreenTimeTracker() {
     initDb();
@@ -85,23 +95,39 @@ std::string ScreenTimeTracker::normalizeAppName(const std::string &name) {
     return n;
 }
 
+// ---------------------------------------------------------------------------
+// isScreenBlanked()
+//
+// Returns true only when the X screen saver has actually blanked or locked
+// the display. A user sitting still watching a video returns false — the
+// screen is still ON, just idle from an input perspective.
+// ---------------------------------------------------------------------------
+bool ScreenTimeTracker::isScreenBlanked(Display *dpy) const {
+    int evBase, errBase;
+    if (!XScreenSaverQueryExtension(dpy, &evBase, &errBase))
+        return false; // Extension not present → assume screen is on
+
+    XScreenSaverInfo *info = XScreenSaverAllocInfo();
+    if (!info) return false;
+
+    XScreenSaverQueryInfo(dpy, DefaultRootWindow(dpy), info);
+    int state = info->state;
+    XFree(info);
+
+    // ScreenSaverOn (1) or ScreenSaverCycle (2) → display truly blanked
+    return (state == ScreenSaverOn || state == ScreenSaverCycle);
+}
+
 std::string ScreenTimeTracker::getFocusedAppName() {
     Display *dpy = XOpenDisplay(nullptr);
     if (!dpy) return "";
 
-    // Check idle time first
-    XScreenSaverInfo *info = XScreenSaverAllocInfo();
-    if (info) {
-        int evBase, errBase;
-        if (XScreenSaverQueryExtension(dpy, &evBase, &errBase)) {
-            XScreenSaverQueryInfo(dpy, DefaultRootWindow(dpy), info);
-            if (info->idle > IDLE_THRESHOLD_MS) {
-                XFree(info);
-                XCloseDisplay(dpy);
-                return ""; // User is idle
-            }
-        }
-        XFree(info);
+    // FIX: Only bail out if the screen is actually blanked/locked,
+    //      NOT just because the user hasn't touched the mouse recently.
+    //      This mirrors mobile behavior: app on screen = time counted.
+    if (isScreenBlanked(dpy)) {
+        XCloseDisplay(dpy);
+        return ""; // Screen is off / locked — don't count
     }
 
     Window focused;
