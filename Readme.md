@@ -28,12 +28,20 @@ Linux system monitor with real-time metrics, process management, battery trackin
 ## Install
 
 ```bash
-# 1. Install dependencies
+# 1. Install Dependencies
+# Ubuntu / Debian / Linux Mint
 sudo apt update
 sudo apt install cmake g++ qt6-base-dev libqt6charts6-dev libqt6sql6-sqlite \
     libx11-dev libxss-dev libsqlite3-dev
 
-# 2. Clone and build
+# Fedora
+sudo dnf install cmake gcc-c++ qt6-qtbase-devel qt6-qtcharts-devel \
+    libX11-devel libXScrnSaver-devel sqlite-devel
+
+# Arch Linux
+sudo pacman -S cmake gcc qt6-base qt6-charts libx11 libxss sqlite
+
+# 1. Clone and build
 git clone https://github.com/your-username/system-monitor.git
 cd system-monitor
 mkdir build && cd build
