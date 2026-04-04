@@ -139,13 +139,13 @@ void ScreenTimeTab::setupUI() {
     appList->setColumnCount(3);
     appList->setHeaderHidden(true);
     appList->setRootIsDecorated(false);
-    appList->setIndentation(0);
-    appList->setUniformRowHeights(true);
+    appList->setIndentation(28);
+    appList->setUniformRowHeights(false);
 
     appList->header()->setSectionResizeMode(0, QHeaderView::Interactive);
     appList->header()->setSectionResizeMode(1, QHeaderView::Stretch);
     appList->header()->setSectionResizeMode(2, QHeaderView::Interactive);
-    appList->setColumnWidth(0, 160);
+    appList->setColumnWidth(0, 170);
     appList->setColumnWidth(2, 75);
 
     appList->setStyleSheet(
@@ -153,12 +153,39 @@ void ScreenTimeTab::setupUI() {
         "  background:#1c1c1e; border:none; border-radius:14px; font-size:14px;"
         "}"
         "QTreeWidget::item{"
-        "  padding:10px 16px; min-height:32px;"
+        "  padding:9px 14px; min-height:30px;"
         "  border-bottom:1px solid #2c2c2e;"
         "}"
         "QTreeWidget::item:last{ border-bottom:none; }"
         "QTreeWidget::item:selected{ background:#2c2c2e; }"
-        "QTreeWidget::item:hover:!selected{ background:#232326; }");
+        "QTreeWidget::item:hover:!selected{ background:#232326; }"
+        // Branch indicators (show/hide toggle arrows) — styled as chevrons
+        "QTreeWidget::branch:has-children:!has-siblings:closed,"
+        "QTreeWidget::branch:closed:has-children:has-siblings{"
+        "  border-image:none; image:none;"
+        "}"
+        "QTreeWidget::branch:open:has-children:!has-siblings,"
+        "QTreeWidget::branch:open:has-children:has-siblings{"
+        "  border-image:none; image:none;"
+        "}");
+
+    // Toggle browser tab rows when clicked
+    connect(appList, &QTreeWidget::itemClicked, this, [this](QTreeWidgetItem *item, int /*col*/) {
+        // Only act on top-level browser items that have children
+        if (item->parent() != nullptr) return;
+        if (item->childCount() == 0 && !item->data(0, Qt::UserRole+1).toBool()) return;
+
+        QString browserName = item->data(0, Qt::UserRole).toString();
+        if (browserName.isEmpty()) return;
+
+        bool wasExpanded = m_expandedBrowsers.contains(browserName);
+        if (wasExpanded) {
+            m_expandedBrowsers.remove(browserName);
+        } else {
+            m_expandedBrowsers.insert(browserName);
+        }
+        buildAppList();
+    });
 
     lay->addWidget(appList, 1);
 
@@ -261,6 +288,8 @@ void ScreenTimeTab::buildAppList() {
     const auto &data = showingWeek ? cachedWeekly : cachedToday;
     if (data.empty()) return;
 
+    const auto &browserTabs = showingWeek ? cachedBrowserTabsWeekly : cachedBrowserTabsToday;
+
     int maxSec = 0;
     for (auto &s : data) {
         int t = showingWeek ? s.weekSeconds : s.todaySeconds;
@@ -268,53 +297,99 @@ void ScreenTimeTab::buildAppList() {
     }
     if (maxSec <= 0) maxSec = 1;
 
+    // Browser name set for quick lookup
+    auto isBrowserApp = [](const std::string &n) {
+        return n == "google-chrome" || n == "chromium" ||
+               n == "brave"         || n == "firefox"  ||
+               n == "microsoft-edge";
+    };
+
     for (auto &s : data) {
         int sec = showingWeek ? s.weekSeconds : s.todaySeconds;
         if (sec <= 0) continue;
 
-        double pct = (maxSec > 0) ? (static_cast<double>(sec) / maxSec) * 100.0 : 0;
+        int totalRef = showingWeek ? cachedWeekSec : cachedTodaySec;
+        double sharePct = (totalRef > 0) ? (static_cast<double>(sec) / totalRef) * 100.0 : 0;
+
+        QString qName = QString::fromStdString(s.appName);
+        bool hasTabs = isBrowserApp(s.appName) &&
+                       browserTabs.count(s.appName) && !browserTabs.at(s.appName).empty();
+        bool expanded = hasTabs && m_expandedBrowsers.contains(qName);
 
         auto *item = new QTreeWidgetItem();
 
-        // Name
-        item->setText(0, QString::fromStdString(s.appName));
+        // ── Name column ──
+        QString displayName = qName;
+        if (hasTabs) {
+            displayName = (expanded ? "▼  " : "▶  ") + qName;
+            // Store clean browser name for click handler
+            item->setData(0, Qt::UserRole,    qName);
+            item->setData(0, Qt::UserRole + 1, true);  // isBrowserItem flag
+        }
+        item->setText(0, displayName);
         item->setForeground(0, QColor(230, 230, 230));
         QFont f;
         if (appList->topLevelItemCount() < 2) f.setBold(true);
         item->setFont(0, f);
 
-        // Bar
-        int barLen = static_cast<int>((static_cast<double>(sec) / maxSec) * 28);
+        // ── Bar column ──
+        int barLen = static_cast<int>((static_cast<double>(sec) / maxSec) * 24);
         if (barLen < 1) barLen = 1;
         item->setText(1, QString(barLen, QChar(0x2588)));
 
-        // Color code bars by usage intensity
+        // Color by usage share
         QColor bc;
-        int rank = appList->topLevelItemCount();
-        int totalRef = showingWeek ? cachedWeekSec : cachedTodaySec;
-        double sharePct = (totalRef > 0) ? (static_cast<double>(sec) / totalRef) * 100.0 : 0;
-
-        if (sharePct > 35) {
-            bc = QColor(255, 69, 58);       // Red — heavy usage
-            item->setForeground(0, QColor(255, 120, 110));
-        } else if (sharePct > 25) {
-            bc = QColor(255, 159, 10);      // Orange
-            item->setForeground(0, QColor(255, 200, 100));
-        } else if (sharePct > 15) {
-            bc = QColor(0, 175, 255);       // Cyan — moderate
-        } else if (sharePct > 8) {
-            bc = QColor(48, 209, 88);       // Green — light
-        } else {
-            bc = QColor(72, 72, 74);        // Gray — minimal
-        }
+        if (sharePct > 35)      { bc = QColor(255, 69, 58);  item->setForeground(0, QColor(255, 120, 110)); }
+        else if (sharePct > 25) { bc = QColor(255, 159, 10); item->setForeground(0, QColor(255, 200, 100)); }
+        else if (sharePct > 15)   bc = QColor(0, 175, 255);
+        else if (sharePct > 8)    bc = QColor(48, 209, 88);
+        else                      bc = QColor(72, 72, 74);
         item->setForeground(1, bc);
 
-        // Time — color matches bar
+        // ── Time column ──
         item->setText(2, fmtTime(sec));
         item->setForeground(2, bc.lighter(130));
         item->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
 
         appList->addTopLevelItem(item);
+
+        // ── Browser sub-tabs ──
+        if (hasTabs && expanded) {
+            const auto &tabs = browserTabs.at(s.appName);
+            int tabMaxSec = 1;
+            for (auto &tab : tabs) {
+                int ts = showingWeek ? tab.weekSeconds : tab.todaySeconds;
+                if (ts > tabMaxSec) tabMaxSec = ts;
+            }
+
+            for (auto &tab : tabs) {
+                int tabSec = showingWeek ? tab.weekSeconds : tab.todaySeconds;
+                if (tabSec <= 0) continue;
+
+                auto *child = new QTreeWidgetItem(item);
+
+                // Site name with a bullet
+                child->setText(0, "· " + QString::fromStdString(tab.site));
+                child->setForeground(0, QColor(180, 180, 185));
+                QFont sf;
+                sf.setPointSize(12);
+                child->setFont(0, sf);
+
+                // Smaller bar
+                int cBarLen = static_cast<int>((static_cast<double>(tabSec) / tabMaxSec) * 18);
+                if (cBarLen < 1) cBarLen = 1;
+                child->setText(1, QString(cBarLen, QChar(0x2588)));
+                child->setForeground(1, bc.darker(110));
+
+                child->setText(2, fmtTime(tabSec));
+                child->setForeground(2, QColor(150, 150, 155));
+                child->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
+
+                child->setData(0, Qt::UserRole + 1, false); // not a browser toggle item
+            }
+
+            item->setExpanded(true);
+        }
     }
 }
 
@@ -386,14 +461,18 @@ void ScreenTimeTab::updateStats(
     int totalTodaySec, int totalWeekSec,
     const std::string &currentApp,
     const std::vector<ScreenTimeTracker::DailyTotal> &last7,
-    int dailyAvgSec)
+    int dailyAvgSec,
+    const std::map<std::string, std::vector<ScreenTimeTracker::BrowserTabTime>> &browserTabsToday,
+    const std::map<std::string, std::vector<ScreenTimeTracker::BrowserTabTime>> &browserTabsWeekly)
 {
-    cachedToday = today;
-    cachedWeekly = weekly;
-    cachedTodaySec = totalTodaySec;
-    cachedWeekSec = totalWeekSec;
-    cachedLast7 = last7;
-    cachedDailyAvg = dailyAvgSec;
+    cachedToday            = today;
+    cachedWeekly           = weekly;
+    cachedTodaySec         = totalTodaySec;
+    cachedWeekSec          = totalWeekSec;
+    cachedLast7            = last7;
+    cachedDailyAvg         = dailyAvgSec;
+    cachedBrowserTabsToday   = browserTabsToday;
+    cachedBrowserTabsWeekly  = browserTabsWeekly;
     (void)currentApp;
     refresh();
 }

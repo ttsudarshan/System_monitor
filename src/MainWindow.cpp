@@ -67,12 +67,16 @@ void MainWindow::onRefresh() {
     auto todayScreenTime = screenTracker.todayStats();
     auto weeklyScreenTime = screenTracker.weeklyStats();
     auto last7 = screenTracker.last7Days();
+    auto browserTabsToday   = screenTracker.browserTabTodayStats();
+    auto browserTabsWeekly  = screenTracker.browserTabWeeklyStats();
     screenTimeTab->updateStats(todayScreenTime, weeklyScreenTime,
                                screenTracker.totalTodaySeconds(),
                                screenTracker.totalWeekSeconds(),
                                screenTracker.currentApp(),
                                last7,
-                               screenTracker.dailyAverageSeconds());
+                               screenTracker.dailyAverageSeconds(),
+                               browserTabsToday,
+                               browserTabsWeekly);
 
     // Check alerts
     double memPct = (memMonitor.totalMB() > 0)

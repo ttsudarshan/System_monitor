@@ -2,6 +2,8 @@
 
 #include <string>
 #include <vector>
+#include <map>
+#include <set>
 #include <unordered_map>
 #include <cstdint>
 #include <chrono>
@@ -26,6 +28,13 @@ public:
         int weekSeconds;
     };
 
+    struct BrowserTabTime {
+        std::string browser;
+        std::string site;
+        int todaySeconds;
+        int weekSeconds;
+    };
+
     // Today's screen time per app, sorted descending
     std::vector<AppScreenTime> todayStats() const;
 
@@ -45,6 +54,10 @@ public:
     int totalWeekSeconds() const;
     int dailyAverageSeconds() const;
 
+    // Browser tab stats: browser → [sites sorted by time desc]
+    std::map<std::string, std::vector<BrowserTabTime>> browserTabTodayStats() const;
+    std::map<std::string, std::vector<BrowserTabTime>> browserTabWeeklyStats() const;
+
     // Currently focused app
     std::string currentApp() const { return currentFocusApp; }
 
@@ -59,7 +72,12 @@ private:
     // the display — NOT merely because the user is idle (e.g. watching video).
     bool isScreenBlanked(Display *dpy) const;
 
-    std::string getFocusedAppName();
+    // Gets both the app name and window title from the focused window
+    bool getFocusedAppAndTitle(std::string &appName, std::string &windowTitle);
+
     std::string normalizeAppName(const std::string &name);
+    bool isBrowser(const std::string &appName) const;
+    std::string extractSiteFromTitle(const std::string &title, const std::string &browser) const;
     void recordTick(const std::string &appName, int seconds);
+    void recordBrowserTab(const std::string &browser, const std::string &site, int seconds);
 };

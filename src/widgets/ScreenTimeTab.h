@@ -10,6 +10,8 @@
 #include <QtCharts/QBarCategoryAxis>
 #include <QtCharts/QValueAxis>
 #include <QtCharts/QLineSeries>
+#include <QSet>
+#include <map>
 #include "monitors/ScreenTimeTracker.h"
 
 class ScreenTimeTab : public QWidget {
@@ -23,7 +25,9 @@ public:
                      int totalTodaySec, int totalWeekSec,
                      const std::string &currentApp,
                      const std::vector<ScreenTimeTracker::DailyTotal> &last7,
-                     int dailyAvgSec);
+                     int dailyAvgSec,
+                     const std::map<std::string, std::vector<ScreenTimeTracker::BrowserTabTime>> &browserTabsToday,
+                     const std::map<std::string, std::vector<ScreenTimeTracker::BrowserTabTime>> &browserTabsWeekly);
 
 private slots:
     void onWeekClicked();
@@ -54,10 +58,15 @@ private:
     QLabel *mostUsedTitle;
     QTreeWidget *appList;
 
+    // Which browsers have their tabs expanded
+    QSet<QString> m_expandedBrowsers;
+
     // Cache
     std::vector<ScreenTimeTracker::AppScreenTime> cachedToday;
     std::vector<ScreenTimeTracker::AppScreenTime> cachedWeekly;
     std::vector<ScreenTimeTracker::DailyTotal> cachedLast7;
+    std::map<std::string, std::vector<ScreenTimeTracker::BrowserTabTime>> cachedBrowserTabsToday;
+    std::map<std::string, std::vector<ScreenTimeTracker::BrowserTabTime>> cachedBrowserTabsWeekly;
     int cachedTodaySec = 0;
     int cachedWeekSec = 0;
     int cachedDailyAvg = 0;

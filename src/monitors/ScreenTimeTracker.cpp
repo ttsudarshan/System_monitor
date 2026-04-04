@@ -58,6 +58,16 @@ void ScreenTimeTracker::initDb() {
            "seconds INTEGER NOT NULL DEFAULT 0,"
            "UNIQUE(app_name, date))");
     q.exec("CREATE INDEX IF NOT EXISTS idx_st_date ON screen_time(date)");
+
+    q.exec("CREATE TABLE IF NOT EXISTS browser_tab_time ("
+           "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+           "browser TEXT NOT NULL,"
+           "site TEXT NOT NULL,"
+           "date TEXT NOT NULL,"
+           "seconds INTEGER NOT NULL DEFAULT 0,"
+           "UNIQUE(browser, site, date))");
+    q.exec("CREATE INDEX IF NOT EXISTS idx_btt_date ON browser_tab_time(date)");
+
     q.exec("PRAGMA journal_mode=WAL");
 }
 
@@ -118,16 +128,16 @@ bool ScreenTimeTracker::isScreenBlanked(Display *dpy) const {
     return (state == ScreenSaverOn || state == ScreenSaverCycle);
 }
 
-std::string ScreenTimeTracker::getFocusedAppName() {
-    Display *dpy = XOpenDisplay(nullptr);
-    if (!dpy) return "";
+bool ScreenTimeTracker::getFocusedAppAndTitle(std::string &appName, std::string &windowTitle) {
+    appName.clear();
+    windowTitle.clear();
 
-    // FIX: Only bail out if the screen is actually blanked/locked,
-    //      NOT just because the user hasn't touched the mouse recently.
-    //      This mirrors mobile behavior: app on screen = time counted.
+    Display *dpy = XOpenDisplay(nullptr);
+    if (!dpy) return false;
+
     if (isScreenBlanked(dpy)) {
         XCloseDisplay(dpy);
-        return ""; // Screen is off / locked — don't count
+        return false;
     }
 
     Window focused;
@@ -136,13 +146,16 @@ std::string ScreenTimeTracker::getFocusedAppName() {
 
     if (focused == 0 || focused == 1) {
         XCloseDisplay(dpy);
-        return "";
+        return false;
     }
 
-    Atom wmClass = XInternAtom(dpy, "WM_CLASS", 1);
+    Atom wmClass   = XInternAtom(dpy, "WM_CLASS", 1);
+    Atom netWmName = XInternAtom(dpy, "_NET_WM_NAME", 1);
+    Atom utf8Str   = XInternAtom(dpy, "UTF8_STRING", 1);
+
     if (wmClass == 0) {
         XCloseDisplay(dpy);
-        return "";
+        return false;
     }
 
     Window current = focused;
@@ -164,8 +177,24 @@ std::string ScreenTimeTracker::getFocusedAppName() {
             if (nItems > instance.length() + 1)
                 className = std::string(reinterpret_cast<char*>(prop) + instance.length() + 1);
             XFree(prop);
+
+            appName = normalizeAppName(className.empty() ? instance : className);
+
+            // Read _NET_WM_NAME (UTF-8 window title) from the same top-level window
+            if (netWmName && utf8Str) {
+                unsigned char *titleProp = nullptr;
+                unsigned long titleItems;
+                Atom at; int af; unsigned long ba;
+                if (XGetWindowProperty(dpy, current, netWmName, 0, 4096, 0,
+                                       utf8Str, &at, &af, &titleItems, &ba,
+                                       &titleProp) == Success && titleProp) {
+                    windowTitle = reinterpret_cast<char*>(titleProp);
+                    XFree(titleProp);
+                }
+            }
+
             XCloseDisplay(dpy);
-            return normalizeAppName(className.empty() ? instance : className);
+            return true;
         }
 
         if (!XQueryTree(dpy, current, &root, &parent, &children, &nChildren)) break;
@@ -175,7 +204,117 @@ std::string ScreenTimeTracker::getFocusedAppName() {
     }
 
     XCloseDisplay(dpy);
-    return "";
+    return false;
+}
+
+bool ScreenTimeTracker::isBrowser(const std::string &appName) const {
+    return appName == "google-chrome" || appName == "chromium" ||
+           appName == "brave"         || appName == "firefox"  ||
+           appName == "microsoft-edge";
+}
+
+std::string ScreenTimeTracker::extractSiteFromTitle(const std::string &title,
+                                                     const std::string &browser) const {
+    std::string t = title;
+
+    // Strip browser suffix so we are left with the page title
+    auto stripSuffix = [&](const std::string &suffix) {
+        size_t pos = t.rfind(suffix);
+        if (pos != std::string::npos) t = t.substr(0, pos);
+    };
+
+    if      (browser == "google-chrome")   { stripSuffix(" - Google Chrome");   stripSuffix(" \xe2\x80\x94 Google Chrome"); }
+    else if (browser == "chromium")        { stripSuffix(" - Chromium"); }
+    else if (browser == "brave")           { stripSuffix(" - Brave"); }
+    else if (browser == "firefox")         { stripSuffix(" \xe2\x80\x94 Mozilla Firefox"); stripSuffix(" - Mozilla Firefox"); }
+    else if (browser == "microsoft-edge")  { stripSuffix(" - Microsoft Edge"); }
+
+    // Trim
+    while (!t.empty() && (t.back() == ' ' || t.back() == '\t')) t.pop_back();
+    while (!t.empty() && (t.front() == ' ' || t.front() == '\t')) t = t.substr(1);
+
+    if (t.empty() || t == "New Tab" || t == "about:blank" || t == "New tab") return "";
+
+    // Lowercase copy for matching aliases that can't be inferred from segments
+    // (combined domains, non-obvious capitalization, multi-word brand names)
+    std::string tl = t;
+    std::transform(tl.begin(), tl.end(), tl.begin(), ::tolower);
+
+    // Only keep entries that the segment heuristic below CANNOT handle correctly:
+    //   • Sites with aliases/combined domains (twitter → X, openai → ChatGPT)
+    //   • Google sub-products that share the "google" segment
+    if (tl.find("google docs")     != std::string::npos) return "Google Docs";
+    if (tl.find("google drive")    != std::string::npos) return "Google Drive";
+    if (tl.find("google calendar") != std::string::npos) return "Google Calendar";
+    if (tl.find("google meet")     != std::string::npos) return "Google Meet";
+    if (tl.find("stack overflow")  != std::string::npos) return "Stack Overflow";
+    if (tl.find("twitter")         != std::string::npos ||
+        tl.find("x.com")           != std::string::npos) return "X (Twitter)";
+    if (tl.find("chatgpt")         != std::string::npos ||
+        tl.find("openai")          != std::string::npos) return "ChatGPT";
+    if (tl.find("claude")          != std::string::npos ||
+        tl.find("anthropic")       != std::string::npos) return "Claude";
+
+    // ---------------------------------------------------------------
+    // For unknown sites: website names are short; page content is long.
+    // Split by | and - and pick the shortest segment — it is almost
+    // always the brand/site name.  Prefer the last segment after |
+    // when present (the most common "Page Title | Site Name" pattern).
+    // ---------------------------------------------------------------
+
+    auto trimSeg = [](const std::string &s) -> std::string {
+        size_t a = s.find_first_not_of(" \t");
+        if (a == std::string::npos) return "";
+        size_t b = s.find_last_not_of(" \t");
+        return s.substr(a, b - a + 1);
+    };
+
+    // Collect all segments split by | and -
+    std::vector<std::string> segments;
+    std::string cur;
+    for (char c : t) {
+        if (c == '|' || c == '-') {
+            std::string seg = trimSeg(cur);
+            if (!seg.empty()) segments.push_back(seg);
+            cur.clear();
+        } else {
+            cur += c;
+        }
+    }
+    {
+        std::string seg = trimSeg(cur);
+        if (!seg.empty()) segments.push_back(seg);
+    }
+
+    if (segments.size() <= 1) {
+        // No separators — return title as-is (truncated if long)
+        if (t.size() > 60) t = t.substr(0, 57) + "...";
+        return t;
+    }
+
+    // If there was a | separator, the last | segment is very reliable
+    {
+        size_t pos = t.rfind('|');
+        if (pos != std::string::npos) {
+            std::string seg = trimSeg(t.substr(pos + 1));
+            if (!seg.empty() && seg.size() <= 40)
+                return seg;
+        }
+    }
+
+    // Otherwise find the shortest segment (site names are concise)
+    std::string shortest;
+    for (const auto &seg : segments) {
+        if (shortest.empty() || seg.size() < shortest.size())
+            shortest = seg;
+    }
+    if (!shortest.empty() && shortest.size() <= 35)
+        return shortest;
+
+    // Last resort: first segment (truncated)
+    std::string first = segments.front();
+    if (first.size() > 60) first = first.substr(0, 57) + "...";
+    return first;
 }
 
 void ScreenTimeTracker::tick() {
@@ -187,8 +326,8 @@ void ScreenTimeTracker::tick() {
     if (elapsed <= 0) elapsed = 1;
     if (elapsed > 10) elapsed = 2; // If more than 10s gap, something stalled — record minimal
 
-    std::string app = getFocusedAppName();
-    if (app.empty()) {
+    std::string app, windowTitle;
+    if (!getFocusedAppAndTitle(app, windowTitle)) {
         currentFocusApp.clear();
         return;
     }
@@ -196,7 +335,6 @@ void ScreenTimeTracker::tick() {
     currentFocusApp = app;
 
     // Only record if daemon is NOT running (avoid double counting)
-    // Check if daemon is active by looking for its PID
     bool daemonRunning = false;
     FILE *fp = popen("pgrep -x sysmon-tracker 2>/dev/null", "r");
     if (fp) {
@@ -207,8 +345,15 @@ void ScreenTimeTracker::tick() {
 
     if (daemonRunning) return; // Let daemon handle recording
 
-    // Record the exact elapsed time
     recordTick(app, elapsed);
+
+    // Also track which browser tab is active
+    if (isBrowser(app) && !windowTitle.empty()) {
+        std::string site = extractSiteFromTitle(windowTitle, app);
+        if (!site.empty()) {
+            recordBrowserTab(app, site, elapsed);
+        }
+    }
 }
 
 void ScreenTimeTracker::recordTick(const std::string &appName, int seconds) {
@@ -223,6 +368,66 @@ void ScreenTimeTracker::recordTick(const std::string &appName, int seconds) {
     q.bindValue(":sec", seconds);
     q.bindValue(":sec2", seconds);
     q.exec();
+}
+
+void ScreenTimeTracker::recordBrowserTab(const std::string &browser, const std::string &site, int seconds) {
+    if (browser.empty() || site.empty() || seconds <= 0) return;
+    std::string today = QDate::currentDate().toString("yyyy-MM-dd").toStdString();
+
+    QSqlQuery q(db);
+    q.prepare("INSERT INTO browser_tab_time (browser, site, date, seconds) "
+              "VALUES (:b, :s, :d, :sec) "
+              "ON CONFLICT(browser, site, date) DO UPDATE SET seconds = seconds + :sec2");
+    q.bindValue(":b",    QString::fromStdString(browser));
+    q.bindValue(":s",    QString::fromStdString(site));
+    q.bindValue(":d",    QString::fromStdString(today));
+    q.bindValue(":sec",  seconds);
+    q.bindValue(":sec2", seconds);
+    q.exec();
+}
+
+std::map<std::string, std::vector<ScreenTimeTracker::BrowserTabTime>>
+ScreenTimeTracker::browserTabTodayStats() const {
+    std::map<std::string, std::vector<BrowserTabTime>> result;
+    std::string today = QDate::currentDate().toString("yyyy-MM-dd").toStdString();
+
+    QSqlQuery q(db);
+    q.prepare("SELECT browser, site, seconds FROM browser_tab_time "
+              "WHERE date = :d ORDER BY browser, seconds DESC");
+    q.bindValue(":d", QString::fromStdString(today));
+    if (q.exec()) {
+        while (q.next()) {
+            BrowserTabTime t;
+            t.browser      = q.value(0).toString().toStdString();
+            t.site         = q.value(1).toString().toStdString();
+            t.todaySeconds = q.value(2).toInt();
+            t.weekSeconds  = 0;
+            result[t.browser].push_back(t);
+        }
+    }
+    return result;
+}
+
+std::map<std::string, std::vector<ScreenTimeTracker::BrowserTabTime>>
+ScreenTimeTracker::browserTabWeeklyStats() const {
+    std::map<std::string, std::vector<BrowserTabTime>> result;
+    QString weekAgo = QDate::currentDate().addDays(-7).toString("yyyy-MM-dd");
+
+    QSqlQuery q(db);
+    q.prepare("SELECT browser, site, SUM(seconds) as total FROM browser_tab_time "
+              "WHERE date >= :d GROUP BY browser, site ORDER BY browser, total DESC");
+    q.bindValue(":d", weekAgo);
+    if (q.exec()) {
+        while (q.next()) {
+            BrowserTabTime t;
+            t.browser      = q.value(0).toString().toStdString();
+            t.site         = q.value(1).toString().toStdString();
+            t.todaySeconds = 0;
+            t.weekSeconds  = q.value(2).toInt();
+            result[t.browser].push_back(t);
+        }
+    }
+    return result;
 }
 
 std::vector<ScreenTimeTracker::AppScreenTime> ScreenTimeTracker::todayStats() const {

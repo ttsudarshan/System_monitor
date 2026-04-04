@@ -76,6 +76,11 @@ SystemMonitor
 
 # Check screen time tracker is running
 systemctl --user status sysmon-tracker
+#Useful commands:
+  systemctl --user status sysmon-tracker    # Check status
+  journalctl --user -u sysmon-tracker -f    # View logs
+  systemctl --user stop sysmon-tracker      # Stop
+  systemctl --user restart sysmon-tracker   # Restart
 
 # Check it starts on boot
 systemctl --user is-enabled sysmon-tracker
