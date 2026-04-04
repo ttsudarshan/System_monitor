@@ -1,6 +1,7 @@
 // sysmon-tracker: Background daemon for accurate screen time tracking
 // Runs independently of the System Monitor GUI
 // Records focused app + idle detection to SQLite
+// Supports both X11 and Wayland (GNOME Shell Introspect) sessions
 
 #include <iostream>
 #include <fstream>
@@ -18,20 +19,29 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/scrnsaver.h>
+#include <dbus/dbus.h>
 
-// We use raw SQLite3 instead of Qt to keep the daemon lightweight
 #include <sqlite3.h>
 #include <vector>
 
 // ─── Globals ────────────────────────────────────────────────────
 
 static volatile bool running = true;
-static const int TICK_MS = 1000; // Check every 1 second
-
-// REMOVED: IDLE_THRESHOLD_MS — idle time is no longer used to stop counting.
-// Mobile-style tracking: screen ON = time counted, screen BLANKED/LOCKED = stop.
+static const int TICK_MS = 1000;
 
 void sigHandler(int) { running = false; }
+
+// ─── Session Type ────────────────────────────────────────────────
+
+enum class SessionType { X11, WAYLAND };
+
+static SessionType detectSessionType() {
+    const char *wayland = getenv("WAYLAND_DISPLAY");
+    if (wayland && wayland[0]) return SessionType::WAYLAND;
+    const char *display = getenv("DISPLAY");
+    if (display && display[0]) return SessionType::X11;
+    return SessionType::WAYLAND; // Default to Wayland on modern systems
+}
 
 // ─── App Name Normalization ─────────────────────────────────────
 
@@ -41,9 +51,10 @@ std::string normalize(const std::string &name) {
 
     if (n.find("brave") != std::string::npos) return "brave";
     if (n.find("firefox") != std::string::npos) return "firefox";
-    if (n.find("chrome") != std::string::npos && n.find("chromium") == std::string::npos) return "google-chrome";
     if (n.find("chromium") != std::string::npos) return "chromium";
-    if (n == "code" || n.find("code") == 0) return "vscode";
+    if (n.find("chrome") != std::string::npos) return "google-chrome";
+    if (n == "code" || n.find("vscode") != std::string::npos ||
+        n.find("code-oss") != std::string::npos) return "vscode";
     if (n.find("slack") != std::string::npos) return "slack";
     if (n.find("discord") != std::string::npos) return "discord";
     if (n.find("spotify") != std::string::npos) return "spotify";
@@ -56,7 +67,8 @@ std::string normalize(const std::string &name) {
     if (n.find("nemo") != std::string::npos) return "nemo";
     if (n.find("nautilus") != std::string::npos) return "nautilus";
     if (n.find("cinnamon") != std::string::npos) return "cinnamon";
-    if (n.find("gnome-terminal") != std::string::npos) return "terminal";
+    if (n.find("gnome-terminal") != std::string::npos ||
+        n.find("gnome.terminal") != std::string::npos) return "terminal";
     if (n.find("xterm") != std::string::npos) return "terminal";
     if (n.find("konsole") != std::string::npos) return "terminal";
     if (n.find("tilix") != std::string::npos) return "terminal";
@@ -64,11 +76,33 @@ std::string normalize(const std::string &name) {
     if (n.find("kitty") != std::string::npos) return "terminal";
     if (n.find("gnome-system") != std::string::npos) return "gnome-system-monitor";
     if (n.find("systemmonitor") != std::string::npos) return "system monitor";
-    if (n.find("microsoft-edge") != std::string::npos || n.find("msedge") != std::string::npos) return "microsoft-edge";
+    if (n.find("microsoft-edge") != std::string::npos ||
+        n.find("msedge") != std::string::npos ||
+        (n.find("microsoft") != std::string::npos && n.find("edge") != std::string::npos))
+        return "microsoft-edge";
     if (n.find("obs") != std::string::npos) return "obs-studio";
     if (n.find("zoom") != std::string::npos) return "zoom";
     if (n.find("teams") != std::string::npos) return "teams";
-    return name;
+    return n; // Return lowercased for unknown apps
+}
+
+// Wayland app IDs are reverse-domain (e.g. "org.mozilla.firefox", "com.brave.Browser")
+// Try substring match on the full ID first, then fall back to the last segment.
+std::string normalizeWaylandAppId(const std::string &appId) {
+    std::string result = normalize(appId);
+    // If normalize matched something specific it returns a known name;
+    // if it returned the lowercased appId unchanged, extract the last segment.
+    std::string lower = appId;
+    for (auto &c : lower) c = tolower(c);
+    if (result == lower) {
+        size_t dot = appId.rfind('.');
+        if (dot != std::string::npos) {
+            std::string seg = appId.substr(dot + 1);
+            for (auto &c : seg) c = tolower(c);
+            if (!seg.empty()) return seg;
+        }
+    }
+    return result;
 }
 
 // ─── X11: Get Focused App + Window Title ───────────────────────
@@ -79,14 +113,13 @@ std::string getFocusedApp(Display *dpy, std::string &outTitle) {
     int revert;
     XGetInputFocus(dpy, &focused, &revert);
 
-    if (focused == 0 || focused == 1) return ""; // None or PointerRoot
+    if (focused == 0 || focused == 1) return "";
 
     Atom wmClass   = XInternAtom(dpy, "WM_CLASS", 1);
     Atom netWmName = XInternAtom(dpy, "_NET_WM_NAME", 1);
     Atom utf8Str   = XInternAtom(dpy, "UTF8_STRING", 1);
     if (wmClass == 0) return "";
 
-    // Walk up to find WM_CLASS
     Window current = focused;
     Window root, parent;
     Window *children;
@@ -109,7 +142,6 @@ std::string getFocusedApp(Display *dpy, std::string &outTitle) {
 
             std::string appName = normalize(className.empty() ? instance : className);
 
-            // Also read the window title for browser tab tracking
             if (netWmName && utf8Str) {
                 unsigned char *tp = nullptr;
                 Atom at; int af; unsigned long ni, ba;
@@ -130,6 +162,188 @@ std::string getFocusedApp(Display *dpy, std::string &outTitle) {
     }
 
     return "";
+}
+
+// ─── X11: Screen Blanked Check ──────────────────────────────────
+
+bool isScreenBlanked(Display *dpy) {
+    int eventBase, errorBase;
+    if (!XScreenSaverQueryExtension(dpy, &eventBase, &errorBase))
+        return false;
+
+    XScreenSaverInfo *info = XScreenSaverAllocInfo();
+    if (!info) return false;
+
+    XScreenSaverQueryInfo(dpy, DefaultRootWindow(dpy), info);
+    int state = info->state;
+    XFree(info);
+
+    return (state == ScreenSaverOn || state == ScreenSaverCycle);
+}
+
+// ─── D-Bus: Persistent Session Bus Connection ───────────────────
+
+static DBusConnection* getDbusConn() {
+    static DBusConnection *conn = nullptr;
+    if (!conn) {
+        DBusError err;
+        dbus_error_init(&err);
+        conn = dbus_bus_get(DBUS_BUS_SESSION, &err);
+        if (dbus_error_is_set(&err)) {
+            std::cerr << "D-Bus connection error: " << err.message << std::endl;
+            dbus_error_free(&err);
+            conn = nullptr;
+        }
+    }
+    return conn;
+}
+
+// ─── Wayland: Screen Locked Check via D-Bus ─────────────────────
+// Uses org.freedesktop.ScreenSaver (works on GNOME and KDE)
+
+bool isScreenBlankedWayland() {
+    DBusConnection *conn = getDbusConn();
+    if (!conn) return false;
+
+    DBusError err;
+    dbus_error_init(&err);
+
+    DBusMessage *msg = dbus_message_new_method_call(
+        "org.freedesktop.ScreenSaver",
+        "/org/freedesktop/ScreenSaver",
+        "org.freedesktop.ScreenSaver",
+        "GetActive"
+    );
+    if (!msg) return false;
+
+    DBusMessage *reply = dbus_connection_send_with_reply_and_block(conn, msg, 300, &err);
+    dbus_message_unref(msg);
+
+    if (!reply || dbus_error_is_set(&err)) {
+        dbus_error_free(&err);
+        return false; // Can't determine → assume screen is on
+    }
+
+    dbus_bool_t active = false;
+    DBusMessageIter iter;
+    dbus_message_iter_init(reply, &iter);
+    if (dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_BOOLEAN)
+        dbus_message_iter_get_basic(&iter, &active);
+
+    dbus_message_unref(reply);
+    return (bool)active;
+}
+
+// ─── Wayland: Focused Window via GNOME Shell Introspect ─────────
+// Uses org.gnome.Shell.Introspect GetWindows() → a{ta{sv}}
+// Each window dict has keys: "app-id" (string), "title" (string), "in-focus" (bool)
+
+static bool gnomeIntrospectAvailable = true;
+static int  gnomeIntrospectFailures  = 0;
+
+struct WaylandFocusInfo { std::string appId, title; };
+
+bool getFocusedWindowWayland(WaylandFocusInfo &info) {
+    if (!gnomeIntrospectAvailable) return false;
+
+    DBusConnection *conn = getDbusConn();
+    if (!conn) return false;
+
+    DBusError err;
+    dbus_error_init(&err);
+
+    DBusMessage *msg = dbus_message_new_method_call(
+        "org.gnome.Shell",
+        "/org/gnome/Shell/Introspect",
+        "org.gnome.Shell.Introspect",
+        "GetWindows"
+    );
+    if (!msg) return false;
+
+    DBusMessage *reply = dbus_connection_send_with_reply_and_block(conn, msg, 500, &err);
+    dbus_message_unref(msg);
+
+    if (!reply || dbus_error_is_set(&err)) {
+        dbus_error_free(&err);
+        if (++gnomeIntrospectFailures >= 3) {
+            gnomeIntrospectAvailable = false;
+            std::cerr << "GNOME Shell Introspect unavailable — window tracking disabled on this compositor." << std::endl;
+            std::cerr << "Only GNOME Wayland is supported. On KDE or other compositors, use an X11 session." << std::endl;
+        }
+        return false;
+    }
+    gnomeIntrospectFailures = 0;
+
+    // Parse a{ta{sv}}
+    DBusMessageIter iter;
+    dbus_message_iter_init(reply, &iter);
+    bool found = false;
+
+    if (dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_ARRAY) {
+        DBusMessageIter outer;
+        dbus_message_iter_recurse(&iter, &outer);
+
+        while (!found && dbus_message_iter_get_arg_type(&outer) == DBUS_TYPE_DICT_ENTRY) {
+            DBusMessageIter entry;
+            dbus_message_iter_recurse(&outer, &entry);
+
+            // Skip uint64 window ID key
+            dbus_message_iter_next(&entry);
+
+            // Parse inner a{sv} (window properties)
+            if (dbus_message_iter_get_arg_type(&entry) == DBUS_TYPE_ARRAY) {
+                DBusMessageIter inner;
+                dbus_message_iter_recurse(&entry, &inner);
+
+                std::string appId, title;
+                bool inFocus = false;
+
+                while (dbus_message_iter_get_arg_type(&inner) == DBUS_TYPE_DICT_ENTRY) {
+                    DBusMessageIter kv;
+                    dbus_message_iter_recurse(&inner, &kv);
+
+                    const char *key = nullptr;
+                    dbus_message_iter_get_basic(&kv, &key);
+                    dbus_message_iter_next(&kv);
+
+                    if (dbus_message_iter_get_arg_type(&kv) == DBUS_TYPE_VARIANT) {
+                        DBusMessageIter var;
+                        dbus_message_iter_recurse(&kv, &var);
+
+                        if (key && strcmp(key, "app-id") == 0 &&
+                            dbus_message_iter_get_arg_type(&var) == DBUS_TYPE_STRING) {
+                            const char *val;
+                            dbus_message_iter_get_basic(&var, &val);
+                            appId = val ? val : "";
+                        } else if (key && strcmp(key, "title") == 0 &&
+                                   dbus_message_iter_get_arg_type(&var) == DBUS_TYPE_STRING) {
+                            const char *val;
+                            dbus_message_iter_get_basic(&var, &val);
+                            title = val ? val : "";
+                        } else if (key && strcmp(key, "in-focus") == 0 &&
+                                   dbus_message_iter_get_arg_type(&var) == DBUS_TYPE_BOOLEAN) {
+                            dbus_bool_t val;
+                            dbus_message_iter_get_basic(&var, &val);
+                            inFocus = (bool)val;
+                        }
+                    }
+
+                    dbus_message_iter_next(&inner);
+                }
+
+                if (inFocus) {
+                    info.appId = appId;
+                    info.title = title;
+                    found = true;
+                }
+            }
+
+            dbus_message_iter_next(&outer);
+        }
+    }
+
+    dbus_message_unref(reply);
+    return found;
 }
 
 // ─── Browser Tab Helpers ─────────────────────────────────────────
@@ -162,9 +376,6 @@ std::string extractSiteFromTitle(const std::string &title, const std::string &br
     std::string tl = t;
     for (auto &c : tl) c = tolower(c);
 
-    // Only keep entries the segment heuristic below CANNOT handle correctly:
-    //   • Sites with aliases/combined domains (twitter → X, openai → ChatGPT)
-    //   • Google sub-products that share the "google" segment
     if (tl.find("google docs")     != std::string::npos) return "Google Docs";
     if (tl.find("google drive")    != std::string::npos) return "Google Drive";
     if (tl.find("google calendar") != std::string::npos) return "Google Calendar";
@@ -177,13 +388,6 @@ std::string extractSiteFromTitle(const std::string &title, const std::string &br
     if (tl.find("claude")          != std::string::npos ||
         tl.find("anthropic")       != std::string::npos) return "Claude";
 
-    // ---------------------------------------------------------------
-    // For unknown sites: website names are short; page content is long.
-    // Split by | and - and pick the shortest segment — it is almost
-    // always the brand/site name.  Prefer the last segment after |
-    // when present (the most common "Page Title | Site Name" pattern).
-    // ---------------------------------------------------------------
-
     auto trimSeg = [](const std::string &s) -> std::string {
         size_t a = s.find_first_not_of(" \t");
         if (a == std::string::npos) return "";
@@ -191,7 +395,6 @@ std::string extractSiteFromTitle(const std::string &title, const std::string &br
         return s.substr(a, b - a + 1);
     };
 
-    // Collect all segments split by | and -
     std::vector<std::string> segments;
     std::string cur;
     for (char c : t) {
@@ -209,12 +412,10 @@ std::string extractSiteFromTitle(const std::string &title, const std::string &br
     }
 
     if (segments.size() <= 1) {
-        // No separators — return title as-is (truncated if long)
         if (t.size() > 60) t = t.substr(0, 57) + "...";
         return t;
     }
 
-    // If there was a | separator, the last | segment is very reliable
     {
         size_t pos = t.rfind('|');
         if (pos != std::string::npos) {
@@ -224,7 +425,6 @@ std::string extractSiteFromTitle(const std::string &title, const std::string &br
         }
     }
 
-    // Otherwise find the shortest segment (site names are concise)
     std::string shortest;
     for (const auto &seg : segments) {
         if (shortest.empty() || seg.size() < shortest.size())
@@ -233,39 +433,9 @@ std::string extractSiteFromTitle(const std::string &title, const std::string &br
     if (!shortest.empty() && shortest.size() <= 35)
         return shortest;
 
-    // Last resort: first segment (truncated)
     std::string first = segments.front();
     if (first.size() > 60) first = first.substr(0, 57) + "...";
     return first;
-}
-
-// ─── X11: Screen Blanked Check ──────────────────────────────────
-//
-// FIX: Replaces the old getIdleMs() + threshold approach.
-//
-// Returns true ONLY when the display is actually blanked or locked.
-// A user watching YouTube with no mouse movement returns FALSE —
-// the screen is still on, so time keeps counting (mobile-style).
-//
-// XScreenSaver state values:
-//   ScreenSaverOff      (0) — screen on, user present     → TRACK
-//   ScreenSaverOn       (1) — screen blanked / locked      → STOP
-//   ScreenSaverCycle    (2) — cycling screen saver active  → STOP
-//   ScreenSaverDisabled (3) — no screen saver installed    → TRACK
-
-bool isScreenBlanked(Display *dpy) {
-    int eventBase, errorBase;
-    if (!XScreenSaverQueryExtension(dpy, &eventBase, &errorBase))
-        return false; // Extension absent — assume screen is on
-
-    XScreenSaverInfo *info = XScreenSaverAllocInfo();
-    if (!info) return false;
-
-    XScreenSaverQueryInfo(dpy, DefaultRootWindow(dpy), info);
-    int state = info->state;
-    XFree(info);
-
-    return (state == ScreenSaverOn || state == ScreenSaverCycle);
 }
 
 // ─── Database ───────────────────────────────────────────────────
@@ -289,7 +459,6 @@ sqlite3* openDb() {
         return nullptr;
     }
 
-    // Create tables if needed
     const char *sql =
         "CREATE TABLE IF NOT EXISTS screen_time ("
         "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -311,14 +480,9 @@ sqlite3* openDb() {
 
     char *err = nullptr;
     sqlite3_exec(db, sql, nullptr, nullptr, &err);
-    if (err) {
-        std::cerr << "SQL error: " << err << std::endl;
-        sqlite3_free(err);
-    }
+    if (err) { std::cerr << "SQL error: " << err << std::endl; sqlite3_free(err); }
 
-    // WAL mode for better concurrent access with GUI
     sqlite3_exec(db, "PRAGMA journal_mode=WAL;", nullptr, nullptr, nullptr);
-
     return db;
 }
 
@@ -333,13 +497,11 @@ void recordBrowserTab(sqlite3 *db, const std::string &browser, const std::string
 
     sqlite3_stmt *stmt;
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) return;
-
     sqlite3_bind_text(stmt, 1, browser.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 2, site.c_str(),    -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 3, date.c_str(),    -1, SQLITE_STATIC);
     sqlite3_bind_int(stmt,  4, seconds);
     sqlite3_bind_int(stmt,  5, seconds);
-
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 }
@@ -354,12 +516,10 @@ void recordTime(sqlite3 *db, const std::string &app, const std::string &date, in
 
     sqlite3_stmt *stmt;
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) return;
-
-    sqlite3_bind_text(stmt, 1, app.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 1, app.c_str(),  -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 2, date.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_int(stmt, 3, seconds);
-    sqlite3_bind_int(stmt, 4, seconds);
-
+    sqlite3_bind_int(stmt,  3, seconds);
+    sqlite3_bind_int(stmt,  4, seconds);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 }
@@ -380,30 +540,37 @@ int main() {
     signal(SIGINT, sigHandler);
     signal(SIGTERM, sigHandler);
 
-    // Open X11 display
-    Display *dpy = XOpenDisplay(nullptr);
-    if (!dpy) {
-        std::cerr << "Cannot open X display. Is X11 running?" << std::endl;
-        return 1;
+    SessionType session = detectSessionType();
+
+    Display *dpy = nullptr;
+    if (session == SessionType::X11) {
+        dpy = XOpenDisplay(nullptr);
+        if (!dpy) {
+            std::cerr << "Cannot open X display, falling back to Wayland mode." << std::endl;
+            session = SessionType::WAYLAND;
+        }
     }
 
-    // Open database
+    if (session == SessionType::WAYLAND) {
+        if (!getDbusConn()) {
+            std::cerr << "Cannot connect to D-Bus session bus. Is a graphical session running?" << std::endl;
+            return 1;
+        }
+    }
+
     sqlite3 *db = openDb();
     if (!db) {
-        XCloseDisplay(dpy);
+        if (dpy) XCloseDisplay(dpy);
         return 1;
     }
 
     std::cout << "sysmon-tracker started (PID " << getpid() << ")" << std::endl;
+    std::cout << "Session: " << (session == SessionType::WAYLAND ? "Wayland" : "X11") << std::endl;
     std::cout << "DB: " << getDbPath() << std::endl;
-    std::cout << "Mode: screen-state (tracks during passive use like video watching)" << std::endl;
 
     auto lastTick = std::chrono::steady_clock::now();
-    std::string lastApp;
-    std::string lastBrowser;   // browser name when tracking a tab
-    std::string lastSite;      // active browser site
-    int accumSeconds    = 0;
-    int accumTabSeconds = 0;
+    std::string lastApp, lastBrowser, lastSite;
+    int accumSeconds = 0, accumTabSeconds = 0;
     std::string lastDate = getCurrentDate();
 
     while (running) {
@@ -413,57 +580,54 @@ int main() {
         int elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lastTick).count();
         lastTick = now;
 
-        // Check if date changed (midnight rollover)
         std::string today = getCurrentDate();
         if (today != lastDate) {
-            if (!lastApp.empty() && accumSeconds > 0)
-                recordTime(db, lastApp, lastDate, accumSeconds);
-            if (!lastSite.empty() && accumTabSeconds > 0)
-                recordBrowserTab(db, lastBrowser, lastSite, lastDate, accumTabSeconds);
-            accumSeconds = 0;
-            accumTabSeconds = 0;
+            if (!lastApp.empty()  && accumSeconds    > 0) recordTime(db, lastApp, lastDate, accumSeconds);
+            if (!lastSite.empty() && accumTabSeconds > 0) recordBrowserTab(db, lastBrowser, lastSite, lastDate, accumTabSeconds);
+            accumSeconds = accumTabSeconds = 0;
             lastDate = today;
         }
 
-        if (isScreenBlanked(dpy)) {
-            if (!lastApp.empty() && accumSeconds > 0)
-                recordTime(db, lastApp, today, accumSeconds);
-            if (!lastSite.empty() && accumTabSeconds > 0)
-                recordBrowserTab(db, lastBrowser, lastSite, today, accumTabSeconds);
-            accumSeconds = 0;
-            accumTabSeconds = 0;
-            lastApp.clear();
-            lastSite.clear();
-            lastBrowser.clear();
+        // ── Screen blanked check ──
+        bool blanked = (session == SessionType::WAYLAND)
+            ? isScreenBlankedWayland()
+            : isScreenBlanked(dpy);
+
+        if (blanked) {
+            if (!lastApp.empty()  && accumSeconds    > 0) recordTime(db, lastApp, today, accumSeconds);
+            if (!lastSite.empty() && accumTabSeconds > 0) recordBrowserTab(db, lastBrowser, lastSite, today, accumTabSeconds);
+            accumSeconds = accumTabSeconds = 0;
+            lastApp.clear(); lastSite.clear(); lastBrowser.clear();
             continue;
         }
 
-        // Get focused app and window title
-        std::string windowTitle;
-        std::string app = getFocusedApp(dpy, windowTitle);
+        // ── Get focused app + title ──
+        std::string app, windowTitle;
+
+        if (session == SessionType::WAYLAND) {
+            WaylandFocusInfo winfo;
+            if (getFocusedWindowWayland(winfo)) {
+                app         = normalizeWaylandAppId(winfo.appId);
+                windowTitle = winfo.title;
+            }
+        } else {
+            app = getFocusedApp(dpy, windowTitle);
+        }
+
         if (app.empty()) {
-            if (!lastApp.empty() && accumSeconds > 0)
-                recordTime(db, lastApp, today, accumSeconds);
-            if (!lastSite.empty() && accumTabSeconds > 0)
-                recordBrowserTab(db, lastBrowser, lastSite, today, accumTabSeconds);
-            accumSeconds = 0;
-            accumTabSeconds = 0;
-            lastApp.clear();
-            lastSite.clear();
-            lastBrowser.clear();
+            if (!lastApp.empty()  && accumSeconds    > 0) recordTime(db, lastApp, today, accumSeconds);
+            if (!lastSite.empty() && accumTabSeconds > 0) recordBrowserTab(db, lastBrowser, lastSite, today, accumTabSeconds);
+            accumSeconds = accumTabSeconds = 0;
+            lastApp.clear(); lastSite.clear(); lastBrowser.clear();
             continue;
         }
 
         // ── App-level tracking ──
         if (app == lastApp) {
             accumSeconds += elapsed;
-            if (accumSeconds >= 30) {
-                recordTime(db, app, today, accumSeconds);
-                accumSeconds = 0;
-            }
+            if (accumSeconds >= 30) { recordTime(db, app, today, accumSeconds); accumSeconds = 0; }
         } else {
-            if (!lastApp.empty() && accumSeconds > 0)
-                recordTime(db, lastApp, today, accumSeconds);
+            if (!lastApp.empty() && accumSeconds > 0) recordTime(db, lastApp, today, accumSeconds);
             lastApp = app;
             accumSeconds = elapsed;
         }
@@ -477,8 +641,7 @@ int main() {
         if (tabChanged && !lastSite.empty() && accumTabSeconds > 0) {
             recordBrowserTab(db, lastBrowser, lastSite, today, accumTabSeconds);
             accumTabSeconds = 0;
-            lastSite.clear();
-            lastBrowser.clear();
+            lastSite.clear(); lastBrowser.clear();
         }
 
         if (!site.empty()) {
@@ -497,13 +660,11 @@ int main() {
     }
 
     // Final flush
-    if (!lastApp.empty() && accumSeconds > 0)
-        recordTime(db, lastApp, getCurrentDate(), accumSeconds);
-    if (!lastSite.empty() && accumTabSeconds > 0)
-        recordBrowserTab(db, lastBrowser, lastSite, getCurrentDate(), accumTabSeconds);
+    if (!lastApp.empty()  && accumSeconds    > 0) recordTime(db, lastApp, getCurrentDate(), accumSeconds);
+    if (!lastSite.empty() && accumTabSeconds > 0) recordBrowserTab(db, lastBrowser, lastSite, getCurrentDate(), accumTabSeconds);
 
     sqlite3_close(db);
-    XCloseDisplay(dpy);
+    if (dpy) XCloseDisplay(dpy);
 
     std::cout << "sysmon-tracker stopped." << std::endl;
     return 0;

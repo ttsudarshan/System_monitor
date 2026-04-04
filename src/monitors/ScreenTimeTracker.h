@@ -10,9 +10,10 @@
 #include <QtSql/QSqlDatabase>
 
 // Forward-declare Display to avoid pulling X11 headers into every TU
-// that includes this header.
 struct _XDisplay;
 typedef struct _XDisplay Display;
+
+enum class SessionType { X11, WAYLAND };
 
 class ScreenTimeTracker {
 public:
@@ -65,17 +66,19 @@ private:
     QSqlDatabase db;
     std::string currentFocusApp;
     std::chrono::steady_clock::time_point lastTickTime;
+    SessionType sessionType;
 
     void initDb();
 
-    // Returns true only when the X screen saver has actually blanked/locked
-    // the display — NOT merely because the user is idle (e.g. watching video).
+    // Returns true when the screen is locked/blanked (works on X11 and Wayland)
     bool isScreenBlanked(Display *dpy) const;
+    bool isScreenBlankedWayland() const;
 
     // Gets both the app name and window title from the focused window
     bool getFocusedAppAndTitle(std::string &appName, std::string &windowTitle);
 
     std::string normalizeAppName(const std::string &name);
+    std::string normalizeWaylandAppId(const std::string &appId);
     bool isBrowser(const std::string &appName) const;
     std::string extractSiteFromTitle(const std::string &title, const std::string &browser) const;
     void recordTick(const std::string &appName, int seconds);

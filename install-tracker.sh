@@ -9,7 +9,8 @@ cd "$(dirname "$0")"
 mkdir -p build-daemon
 cd build-daemon
 g++ -std=c++17 -O2 -o sysmon-tracker ../src/daemon/sysmon-tracker.cpp \
-    -lX11 -lXss -lsqlite3 -lpthread
+    $(pkg-config --cflags dbus-1) \
+    -lX11 -lXss -lsqlite3 -lpthread $(pkg-config --libs dbus-1)
 cd ..
 
 # Install binary

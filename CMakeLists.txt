@@ -8,6 +8,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Charts Sql)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(DBUS REQUIRED dbus-1)
 
 set(SOURCES
     src/main.cpp
@@ -46,7 +48,10 @@ set(HEADERS
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${DBUS_INCLUDE_DIRS}
+)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Widgets
@@ -54,4 +59,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Sql
     X11
     Xss
+    ${DBUS_LIBRARIES}
 )
