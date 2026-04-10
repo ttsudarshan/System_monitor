@@ -34,7 +34,7 @@ sudo apt install cmake g++ qt6-base-dev libqt6charts6-dev libqt6sql6-sqlite \
     libx11-dev libxss-dev libsqlite3-dev
 
 # 2. Clone and build
-git clone https://github.com/your-username/system-monitor.git
+git clone https://github.com/ttsudarshan/system-monitor.git
 cd system-monitor
 mkdir build && cd build
 cmake ..
