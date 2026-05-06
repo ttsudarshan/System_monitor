@@ -19,9 +19,23 @@ Screen time is collected by a **standalone background daemon** (`sysmon-tracker`
 - Pauses counting when the screen is locked or blanked — counts time like a phone (screen on = tracking, screen off = paused)
 - Writes to SQLite at `~/.local/share/SystemMonitor/sysmon.db`; the GUI reads from the same file
 
+## Distro & Desktop Compatibility
+
+The build itself runs on any modern Linux (Ubuntu, Mint, Fedora, RHEL/CentOS Stream 9+, Arch). All the system-stat metrics — CPU, memory, disk, network, battery, RAPL — read from `/proc` and `/sys` and behave the same everywhere.
+
+**Screen time tracking is where your display server matters.** The daemon uses three detection paths in this priority order:
+
+| Session | Detection path | Accuracy |
+|---|---|---|
+| **Any Xorg / X11 session** (incl. "GNOME on Xorg", XFCE, Cinnamon, MATE, KDE/X11) | `_NET_ACTIVE_WINDOW` + `WM_CLASS` via Xlib | **Full** — focused app + browser tab name |
+| GNOME on Wayland *with the companion Shell extension installed* | DBus call to `com.antigravity.SystemMonitor` | Full app name (no tab titles) |
+| KDE/Sway/Hyprland/etc. on Wayland, **or** GNOME Wayland without the extension | `/proc/*/maps` CPU-delta heuristic | **Approximate** — picks busiest GUI process, misses idle-but-focused apps, no tab names |
+
+**Recommendation:** if you're on Fedora Workstation, Fedora KDE Spin, or CentOS Stream and want the most accurate screen time data, log into an **Xorg session** at the login screen ("GNOME on Xorg" / "Plasma (X11)"). Wayland-native sessions on non-GNOME desktops will still record data, just less precisely. Lock/blank detection also relies on GNOME's IdleMonitor DBus interface, so on KDE/Sway under Wayland a locked screen may keep counting time.
+
 ## Prerequisites
 
-- Linux (tested on Ubuntu 24.04, Linux Mint 22)
+- Linux (tested on Ubuntu 24.04, Linux Mint 22; should build on Fedora 39+ and RHEL/CentOS Stream 9+)
 - C++17 compiler (GCC 9+ or Clang 10+)
 - CMake 3.16+
 - Qt6 with Widgets, Charts, and SQL modules
@@ -32,11 +46,31 @@ Screen time is collected by a **standalone background daemon** (`sysmon-tracker`
 
 ### 1. Install dependencies
 
+**Debian / Ubuntu / Mint:**
+
 ```bash
 sudo apt update
 sudo apt install cmake g++ \
     qt6-base-dev libqt6charts6-dev libqt6sql6-sqlite \
     libx11-dev libxss-dev libsqlite3-dev
+```
+
+**Fedora:**
+
+```bash
+sudo dnf install cmake gcc-c++ \
+    qt6-qtbase-devel qt6-qtcharts-devel \
+    libX11-devel libXScrnSaver-devel sqlite-devel
+```
+
+**RHEL / CentOS Stream 9+** (enable CRB/EPEL first if Qt6 isn't found):
+
+```bash
+sudo dnf install epel-release
+sudo dnf config-manager --set-enabled crb
+sudo dnf install cmake gcc-c++ \
+    qt6-qtbase-devel qt6-qtcharts-devel \
+    libX11-devel libXScrnSaver-devel sqlite-devel
 ```
 
 ### 2. Clone and build
