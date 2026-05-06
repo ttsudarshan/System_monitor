@@ -69,9 +69,9 @@ std::string getWaylandFocusedApp() {
 
     std::string out = executeCommand(
         "gdbus call --session "
-        "--dest com.antigravity.SystemMonitor "
-        "--object-path /com/antigravity/SystemMonitor "
-        "--method com.antigravity.SystemMonitor.GetActiveApp "
+        "--dest org.sysmon.Tracker "
+        "--object-path /org/sysmon/Tracker "
+        "--method org.sysmon.Tracker.GetActiveApp "
         "2>/dev/null");
 
     if (out.length() > 2) {

@@ -28,7 +28,7 @@ The build itself runs on any modern Linux (Ubuntu, Mint, Fedora, RHEL/CentOS Str
 | Session | Detection path | Accuracy |
 |---|---|---|
 | **Any Xorg / X11 session** (incl. "GNOME on Xorg", XFCE, Cinnamon, MATE, KDE/X11) | `_NET_ACTIVE_WINDOW` + `WM_CLASS` via Xlib | **Full** — focused app + browser tab name |
-| GNOME on Wayland *with the companion Shell extension installed* | DBus call to `com.antigravity.SystemMonitor` | Full app name (no tab titles) |
+| GNOME on Wayland *with the companion Shell extension installed* | DBus call to `org.sysmon.Tracker` | Full app name (no tab titles) |
 | KDE/Sway/Hyprland/etc. on Wayland, **or** GNOME Wayland without the extension | `/proc/*/maps` CPU-delta heuristic | **Approximate** — picks busiest GUI process, misses idle-but-focused apps, no tab names |
 
 **Recommendation:** if you're on Fedora Workstation, Fedora KDE Spin, or CentOS Stream and want the most accurate screen time data, log into an **Xorg session** at the login screen ("GNOME on Xorg" / "Plasma (X11)"). Wayland-native sessions on non-GNOME desktops will still record data, just less precisely. Lock/blank detection also relies on GNOME's IdleMonitor DBus interface, so on KDE/Sway under Wayland a locked screen may keep counting time.
