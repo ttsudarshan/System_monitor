@@ -55,3 +55,20 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     X11
     Xss
 )
+
+# ── sysmon-tracker daemon (no Qt dependency) ──────────────────────────────
+# Build with: cmake --build build --target sysmon-tracker
+# Install to service path: cmake --install build --prefix ~/.local
+add_executable(sysmon-tracker
+    src/daemon/sysmon-tracker.cpp
+    src/daemon/sysmon-tracker-core.cpp
+)
+set_target_properties(sysmon-tracker PROPERTIES
+    AUTOMOC OFF
+    AUTORCC OFF
+    AUTOUIC OFF
+)
+target_include_directories(sysmon-tracker PRIVATE src/daemon)
+target_compile_features(sysmon-tracker PRIVATE cxx_std_17)
+target_link_libraries(sysmon-tracker PRIVATE sqlite3 X11 Xss)
+install(TARGETS sysmon-tracker RUNTIME DESTINATION bin)

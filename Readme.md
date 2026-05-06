@@ -5,46 +5,61 @@ A real-time Linux system monitoring application built with C++, Qt6, and CMake. 
 ## Features
 
 - **Metrics** — Live graphs for CPU (per-core), memory, swap, disk I/O, and network bandwidth with color-coded warnings
-- **Processes** — App-grouped process view (like Windows Task Manager), kill/suspend/resume/renice, browser tab identification
+- **Processes** — App-grouped process view (like Windows Task Manager), kill/suspend/resume/renice
 - **Battery** — Hardware-accurate power monitoring using Intel RAPL or AMD Energy, per-app power drain attribution, daily/weekly energy tracking
-- **Screen Time** — iOS-style screen time tracking with 7-day chart, daily average, idle detection, and per-app usage breakdown
-- **Logs** — Configurable alerts (CPU > 90%, memory, disk), timestamped event log, CSV export of system statistics
+- **Screen Time** — iOS-style screen time tracking with 7-day bar chart, daily average, idle/lock detection, per-app usage breakdown, and **per-site tab breakdown for browsers** (Brave, Firefox, Chrome, etc.)
+- **Logs** — Configurable alerts (CPU > 90%, memory, disk), timestamped event log, CSV export
+
+## How Screen Time Works
+
+Screen time is collected by a **standalone background daemon** (`sysmon-tracker`) that runs as a systemd user service, completely independent of the GUI. Closing the GUI window does not stop tracking.
+
+- Tracks the focused application every second via X11 `_NET_ACTIVE_WINDOW` / `WM_CLASS`
+- For browsers, reads `_NET_WM_NAME` (window title) and extracts the site name (e.g. "YouTube", "GitHub") to give a per-tab breakdown nested under each browser entry
+- Pauses counting when the screen is locked or blanked — counts time like a phone (screen on = tracking, screen off = paused)
+- Writes to SQLite at `~/.local/share/SystemMonitor/sysmon.db`; the GUI reads from the same file
 
 ## Prerequisites
 
 - Linux (tested on Ubuntu 24.04, Linux Mint 22)
 - C++17 compiler (GCC 9+ or Clang 10+)
 - CMake 3.16+
-- Qt6 with Charts and SQL modules
-- X11 development libraries
-- SQLite3
-
-## Install Dependencies
-
-# System Monitor
-
-Linux system monitor with real-time metrics, process management, battery tracking, and screen time — built with C++ and Qt6.
+- Qt6 with Widgets, Charts, and SQL modules
+- X11 / XScreenSaver development libraries
+- SQLite3 development library
 
 ## Install
 
-```bash
-# 1. Install dependencies
-sudo apt update
-sudo apt install cmake g++ qt6-base-dev libqt6charts6-dev libqt6sql6-sqlite \
-    libx11-dev libxss-dev libsqlite3-dev
+### 1. Install dependencies
 
-# 2. Clone and build
+```bash
+sudo apt update
+sudo apt install cmake g++ \
+    qt6-base-dev libqt6charts6-dev libqt6sql6-sqlite \
+    libx11-dev libxss-dev libsqlite3-dev
+```
+
+### 2. Clone and build
+
+Both the GUI and the daemon are built together with a single CMake command:
+
+```bash
 git clone https://github.com/ttsudarshan/system-monitor.git
 cd system-monitor
-mkdir build && cd build
-cmake ..
-make -j$(nproc)
+cmake -B build
+cmake --build build -j$(nproc)
+```
 
-# 3. Install system-wide to make it survive reboot
-sudo cp SystemMonitor /usr/local/bin/SystemMonitor
+### 3. Install the GUI system-wide
 
-# 4. Create desktop shortcut (shows in app menu)
-chmod +x ~/.local/share/applications/system-monitor.desktop
+```bash
+sudo cp build/SystemMonitor /usr/local/bin/SystemMonitor
+```
+
+Add a desktop shortcut so it appears in your app menu:
+
+```bash
+mkdir -p ~/.local/share/applications
 cat > ~/.local/share/applications/system-monitor.desktop << 'EOF'
 [Desktop Entry]
 Name=System Monitor
@@ -53,92 +68,111 @@ Type=Application
 Categories=System;Monitor;
 Comment=System monitor with battery and screen time tracking
 EOF
+```
 
-# 5. Set up battery monitoring permissions 
-echo 'SUBSYSTEM=="powercap", ACTION=="add", RUN+="/bin/chmod o+r %S%p/energy_uj"' | \
-    sudo tee /etc/udev/rules.d/99-rapl.rules
-sudo udevadm control --reload-rules
-sudo udevadm trigger
+### 4. Install the screen time daemon
 
-# 6. Install background screen time tracker 
-cd ..
+The daemon must be installed and running for screen time to accumulate when the GUI is closed.
+
+**Option A — automated (recommended):**
+
+```bash
 chmod +x install-tracker.sh
 ./install-tracker.sh
 ```
 
-Done. System Monitor is now in your app menu and the screen time tracker starts automatically on every login.
+**Option B — manual:**
+
+```bash
+# Install the binary
+cmake --install build --prefix ~/.local   # puts it at ~/.local/bin/sysmon-tracker
+
+# Install and enable the systemd service
+mkdir -p ~/.config/systemd/user
+cp sysmon-tracker.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now sysmon-tracker
+```
+
+### 5. Set up battery monitoring permissions (optional)
+
+Required for hardware-accurate per-app power drain via Intel RAPL:
+
+```bash
+echo 'SUBSYSTEM=="powercap", ACTION=="add", RUN+="/bin/chmod o+r %S%p/energy_uj"' | \
+    sudo tee /etc/udev/rules.d/99-rapl.rules
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
+Without this, battery drain is estimated from CPU usage and the system power draw reported by `/sys/class/power_supply`.
 
 ## Verify Everything Works
 
 ```bash
-# Check System Monitor runs
+# Launch the GUI
 SystemMonitor
 
-# Check screen time tracker is running
+# Check the screen time daemon is running
 systemctl --user status sysmon-tracker
 
-# Check it starts on boot
+# Confirm it starts automatically on login
 systemctl --user is-enabled sysmon-tracker
 
-# Check RAPL permissions
+# Check RAPL permissions (optional)
 cat /sys/class/powercap/intel-rapl:0/energy_uj
 ```
 
 ## Uninstall
 
 ```bash
-# Remove System Monitor
+# Remove the GUI
 sudo rm /usr/local/bin/SystemMonitor
 rm ~/.local/share/applications/system-monitor.desktop
 
-# Remove screen time tracker
+# Remove the screen time daemon
 systemctl --user stop sysmon-tracker
 systemctl --user disable sysmon-tracker
 rm ~/.local/bin/sysmon-tracker
 rm ~/.config/systemd/user/sysmon-tracker.service
 systemctl --user daemon-reload
 
-# Remove RAPL rule
+# Remove the RAPL udev rule (if installed)
 sudo rm /etc/udev/rules.d/99-rapl.rules
 
-# Remove data
+# Remove all tracked data
 rm -rf ~/.local/share/SystemMonitor
 ```
-
-
-Without RAPL access, battery drain is estimated from CPU usage and battery power draw.
 
 ## Project Structure
 
 ```
 system-monitor/
-├── CMakeLists.txt
-├── README.md
-├── install-tracker.sh              # Installs background tracker
-├── sysmon-tracker.service          # systemd service file
-├── src/
-│   ├── main.cpp
-│   ├── MainWindow.h/cpp
-│   ├── daemon/
-│   │   └── sysmon-tracker.cpp      # Background screen time daemon
-│   ├── monitors/
-│   │   ├── CpuMonitor.h/cpp        # /proc/stat parsing
-│   │   ├── MemoryMonitor.h/cpp     # /proc/meminfo parsing
-│   │   ├── DiskMonitor.h/cpp       # /proc/diskstats + statvfs
-│   │   ├── NetworkMonitor.h/cpp    # /proc/net/dev parsing
-│   │   ├── BatteryMonitor.h/cpp    # /sys/class/power_supply
-│   │   ├── BatteryTracker.h/cpp    # Per-app battery drain (SQLite)
-│   │   ├── EnergyMonitor.h/cpp     # Intel RAPL / AMD Energy
-│   │   └── ScreenTimeTracker.h/cpp # X11 focus tracking + idle detection
-│   └── widgets/
-│       ├── MetricsTab.h/cpp        # CPU, memory, disk, network charts
-│       ├── ProcessesTab.h/cpp      # Process list with app grouping
-│       ├── BatteryStatsTab.h/cpp   # Battery and energy UI
-│       ├── ScreenTimeTab.h/cpp     # Screen time UI
-│       └── LogsTab.h/cpp           # Alerts and logging
-└── data/
-    └── sysmon.db                   # SQLite database (auto-created at
-                                    #   ~/.local/share/SystemMonitor/)
+├── CMakeLists.txt                  # Builds both GUI and daemon
+├── Readme.md
+├── install-tracker.sh              # One-step daemon install helper
+├── sysmon-tracker.service          # systemd user service unit
+└── src/
+    ├── main.cpp
+    ├── MainWindow.h/cpp
+    ├── daemon/
+    │   ├── sysmon-tracker.cpp      # Daemon entry point + main loop
+    │   ├── sysmon-tracker-core.cpp # X11 focus detection, DB writes, tab extraction
+    │   └── sysmon-tracker-core.h
+    ├── monitors/
+    │   ├── CpuMonitor.h/cpp        # /proc/stat parsing
+    │   ├── MemoryMonitor.h/cpp     # /proc/meminfo parsing
+    │   ├── DiskMonitor.h/cpp       # /proc/diskstats + statvfs
+    │   ├── NetworkMonitor.h/cpp    # /proc/net/dev parsing
+    │   ├── BatteryMonitor.h/cpp    # /sys/class/power_supply
+    │   ├── BatteryTracker.h/cpp    # Per-app battery drain (SQLite)
+    │   ├── EnergyMonitor.h/cpp     # Intel RAPL / AMD Energy
+    │   └── ScreenTimeTracker.h/cpp # GUI-side DB queries + fallback tracking
+    └── widgets/
+        ├── MetricsTab.h/cpp        # CPU, memory, disk, network charts
+        ├── ProcessesTab.h/cpp      # Process list with app grouping
+        ├── BatteryStatsTab.h/cpp   # Battery and energy UI
+        ├── ScreenTimeTab.h/cpp     # Screen time UI (nested browser tabs)
+        └── LogsTab.h/cpp           # Alerts and log export
 ```
 
 ## How It Works
@@ -146,12 +180,13 @@ system-monitor/
 | Data | Source | Method |
 |------|--------|--------|
 | CPU usage | `/proc/stat` | Delta between reads |
-| Memory | `/proc/meminfo` | MemTotal - MemAvailable |
+| Memory | `/proc/meminfo` | MemTotal − MemAvailable |
 | Disk I/O | `/proc/diskstats` | Sector read/write deltas |
 | Disk usage | `/proc/mounts` + `statvfs()` | Filesystem stats |
 | Network | `/proc/net/dev` | RX/TX byte deltas |
 | Processes | `/proc/[pid]/stat`, `statm`, `status` | Per-process parsing |
 | Battery | `/sys/class/power_supply/BAT0/` | capacity, power_now, status |
-| CPU power | `/sys/class/powercap/intel-rapl:0/` | RAPL energy counters (microjoules) |
-| Screen time | X11 `WM_CLASS` + `XScreenSaverQueryInfo` | Focused window + idle detection |
-| Browser tabs | `/proc/[pid]/cmdline` + X11 window titles | URL extraction + title matching |
+| CPU power | `/sys/class/powercap/intel-rapl:0/` | RAPL energy counters (µJ) |
+| Screen time | X11 `_NET_ACTIVE_WINDOW` + `WM_CLASS` | Focused window per second |
+| Browser tabs | X11 `_NET_WM_NAME` (window title) | Site name extracted from title |
+| Screen lock | `XScreenSaverQueryInfo` / GNOME IdleMonitor | Pause tracking when blanked |

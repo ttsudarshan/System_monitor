@@ -14,16 +14,24 @@ typedef struct _XDisplay Display;
 
 class ScreenTimeTracker {
 public:
-    ScreenTimeTracker();
+    explicit ScreenTimeTracker(const std::string& dbPath = "", 
+                              const std::string& procPath = "/proc");
     ~ScreenTimeTracker();
 
     // Call every refresh cycle (~1.5s)
     void tick();
 
+    struct TabTime {
+        std::string name;    // site/tab name extracted from window title
+        int seconds;
+    };
+
     struct AppScreenTime {
         std::string appName;
         int todaySeconds;
         int weekSeconds;
+        std::vector<TabTime> todayTabs;   // per-site breakdown (browsers only)
+        std::vector<TabTime> weeklyTabs;
     };
 
     // Today's screen time per app, sorted descending
@@ -58,8 +66,12 @@ private:
     // Returns true only when the X screen saver has actually blanked/locked
     // the display — NOT merely because the user is idle (e.g. watching video).
     bool isScreenBlanked(Display *dpy) const;
-
+    std::string getWaylandFocusedAppName();
     std::string getFocusedAppName();
     std::string normalizeAppName(const std::string &name);
-    void recordTick(const std::string &appName, int seconds);
+    std::string getBrowserTabName(const std::string &app);
+    void recordTick(const std::string &appName, const std::string &tabName, int seconds);
+    
+    std::string customDbPath;
+    std::string procRoot;
 };

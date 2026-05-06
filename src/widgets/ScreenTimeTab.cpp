@@ -17,7 +17,10 @@ QString ScreenTimeTab::fmtTime(int sec) {
     if (sec < 60) return QString("%1s").arg(sec);
     int m = sec / 60, h = m / 60;
     m %= 60;
+    int s = sec % 60;
+    
     if (h > 0) return QString("%1h %2m").arg(h).arg(m, 2, 10, QChar('0'));
+    if (s > 0) return QString("%1m %2s").arg(m).arg(s, 2, 10, QChar('0'));
     return QString("%1m").arg(m);
 }
 
@@ -138,9 +141,9 @@ void ScreenTimeTab::setupUI() {
     appList = new QTreeWidget();
     appList->setColumnCount(3);
     appList->setHeaderHidden(true);
-    appList->setRootIsDecorated(false);
-    appList->setIndentation(0);
-    appList->setUniformRowHeights(true);
+    appList->setRootIsDecorated(true);
+    appList->setIndentation(18);
+    appList->setUniformRowHeights(false);
 
     appList->header()->setSectionResizeMode(0, QHeaderView::Interactive);
     appList->header()->setSectionResizeMode(1, QHeaderView::Stretch);
@@ -256,6 +259,15 @@ void ScreenTimeTab::buildChart() {
 }
 
 void ScreenTimeTab::buildAppList() {
+    // Remember which browser rows the user has expanded so the 1.5s refresh
+    // doesn't silently collapse them.
+    QSet<QString> expandedApps;
+    for (int i = 0; i < appList->topLevelItemCount(); ++i) {
+        auto *it = appList->topLevelItem(i);
+        if (it->isExpanded())
+            expandedApps.insert(it->text(0));
+    }
+
     appList->clear();
 
     const auto &data = showingWeek ? cachedWeekly : cachedToday;
@@ -268,53 +280,79 @@ void ScreenTimeTab::buildAppList() {
     }
     if (maxSec <= 0) maxSec = 1;
 
+    int totalRef = showingWeek ? cachedWeekSec : cachedTodaySec;
+
     for (auto &s : data) {
         int sec = showingWeek ? s.weekSeconds : s.todaySeconds;
         if (sec <= 0) continue;
 
-        double pct = (maxSec > 0) ? (static_cast<double>(sec) / maxSec) * 100.0 : 0;
+        const auto &tabs = showingWeek ? s.weeklyTabs : s.todayTabs;
 
         auto *item = new QTreeWidgetItem();
 
-        // Name
+        // App name
         item->setText(0, QString::fromStdString(s.appName));
         item->setForeground(0, QColor(230, 230, 230));
         QFont f;
         if (appList->topLevelItemCount() < 2) f.setBold(true);
         item->setFont(0, f);
 
-        // Bar
+        // Usage bar
         int barLen = static_cast<int>((static_cast<double>(sec) / maxSec) * 28);
         if (barLen < 1) barLen = 1;
         item->setText(1, QString(barLen, QChar(0x2588)));
 
-        // Color code bars by usage intensity
+        // Color by share of total screen time
         QColor bc;
-        int rank = appList->topLevelItemCount();
-        int totalRef = showingWeek ? cachedWeekSec : cachedTodaySec;
         double sharePct = (totalRef > 0) ? (static_cast<double>(sec) / totalRef) * 100.0 : 0;
-
         if (sharePct > 35) {
-            bc = QColor(255, 69, 58);       // Red — heavy usage
+            bc = QColor(255, 69, 58);
             item->setForeground(0, QColor(255, 120, 110));
         } else if (sharePct > 25) {
-            bc = QColor(255, 159, 10);      // Orange
+            bc = QColor(255, 159, 10);
             item->setForeground(0, QColor(255, 200, 100));
         } else if (sharePct > 15) {
-            bc = QColor(0, 175, 255);       // Cyan — moderate
+            bc = QColor(0, 175, 255);
         } else if (sharePct > 8) {
-            bc = QColor(48, 209, 88);       // Green — light
+            bc = QColor(48, 209, 88);
         } else {
-            bc = QColor(72, 72, 74);        // Gray — minimal
+            bc = QColor(72, 72, 74);
         }
         item->setForeground(1, bc);
 
-        // Time — color matches bar
         item->setText(2, fmtTime(sec));
         item->setForeground(2, bc.lighter(130));
         item->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
 
         appList->addTopLevelItem(item);
+
+        // ── Browser tab children ──────────────────────────────────────────
+        if (!tabs.empty()) {
+            for (const auto &tab : tabs) {
+                if (tab.seconds <= 0) continue;
+                auto *child = new QTreeWidgetItem(item);
+
+                child->setText(0, QString::fromStdString(tab.name));
+                child->setForeground(0, QColor(160, 160, 170));
+
+                // Proportional bar (scaled to parent max, capped at 20 chars)
+                int tabBar = static_cast<int>((static_cast<double>(tab.seconds) / maxSec) * 20);
+                if (tabBar < 1) tabBar = 1;
+                child->setText(1, QString(tabBar, QChar(0x2588)));
+                child->setForeground(1, QColor(70, 110, 160));
+
+                child->setText(2, fmtTime(tab.seconds));
+                child->setForeground(2, QColor(120, 120, 135));
+                child->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
+            }
+        }
+    }
+
+    // Restore expanded state from before the rebuild
+    for (int i = 0; i < appList->topLevelItemCount(); ++i) {
+        auto *it = appList->topLevelItem(i);
+        if (expandedApps.contains(it->text(0)))
+            it->setExpanded(true);
     }
 }
 
