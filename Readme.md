@@ -28,7 +28,7 @@ All sampling (`/proc`, `/sys`, X11, SQLite) runs on a worker thread, so the wind
 
 **Screen Time** — Week view with daily average and per-app / per-site breakdown
 
-![Screen Time week view](screenshots/screentime.png)
+![Screen Time week view](screenshots/screentimeweek.png)
 
 **Screen Time** — Day view, today hour by hour
 
