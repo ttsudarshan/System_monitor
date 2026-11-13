@@ -56,10 +56,10 @@ void NetworkMonitor::read() {
     if (prevTimestamp > 0) {
         double elapsed = (now - prevTimestamp) / 1000.0;
         if (elapsed > 0) {
-            rxRate = (curRx - prevRx) / elapsed;
-            txRate = (curTx - prevTx) / elapsed;
-            if (rxRate < 0) rxRate = 0;
-            if (txRate < 0) txRate = 0;
+            // Unsigned counters: an interface going away (VPN, USB tether)
+            // lowers the total and would otherwise wrap to a huge rate.
+            rxRate = (curRx >= prevRx) ? (curRx - prevRx) / elapsed : 0.0;
+            txRate = (curTx >= prevTx) ? (curTx - prevTx) / elapsed : 0.0;
         }
     }
 

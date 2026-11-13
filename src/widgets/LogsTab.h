@@ -1,11 +1,13 @@
 #pragma once
 
-#include <QWidget>
-#include <QTextEdit>
+#include <QCheckBox>
+#include <QDateTime>
+#include <QLabel>
 #include <QPushButton>
 #include <QSpinBox>
-#include <QLabel>
-#include <QCheckBox>
+#include <QTextEdit>
+#include <QWidget>
+#include <deque>
 
 class LogsTab : public QWidget {
     Q_OBJECT
@@ -15,11 +17,11 @@ public:
 
     void appendLog(const QString &msg);
 
-    // Alert checking — call from MainWindow on each refresh
+    // Alert checking: call from MainWindow on each refresh
     void checkAlerts(double cpuPct, double memPct, double diskMaxPct);
 
-    // Export stats
     struct SystemSnapshot {
+        QDateTime time;
         double cpuPct;
         double memUsedMB;
         double memTotalMB;
@@ -39,8 +41,8 @@ private:
     QTextEdit *logView;
     QPushButton *clearBtn;
     QPushButton *exportBtn;
+    QLabel *snapshotCountLabel;
 
-    // Alert settings
     QCheckBox *cpuAlertCheck;
     QSpinBox *cpuThreshSpin;
     QCheckBox *memAlertCheck;
@@ -48,12 +50,12 @@ private:
     QCheckBox *diskAlertCheck;
     QSpinBox *diskThreshSpin;
 
-    // Cooldown to avoid spamming alerts
     int cpuAlertCooldown = 0;
     int memAlertCooldown = 0;
     int diskAlertCooldown = 0;
-    static constexpr int COOLDOWN_TICKS = 10; // ~15 seconds at 1.5s refresh
+    static constexpr int COOLDOWN_TICKS = 10;  // ~15 seconds at 1.5s refresh
 
-    // Snapshot history for export
-    std::vector<SystemSnapshot> snapshots;
+    // Bounded history for export: 24 h at 1.5 s per sample.
+    static constexpr size_t MAX_SNAPSHOTS = 24 * 3600 * 2 / 3;
+    std::deque<SystemSnapshot> snapshots;
 };

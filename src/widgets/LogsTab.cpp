@@ -1,62 +1,39 @@
 #include "LogsTab.h"
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QGroupBox>
-#include <QDateTime>
-#include <QFileDialog>
-#include <QMessageBox>
+
 #include <QFile>
+#include <QFileDialog>
+#include <QGroupBox>
+#include <QHBoxLayout>
+#include <QMessageBox>
 #include <QTextStream>
+#include <QVBoxLayout>
 
 LogsTab::LogsTab(QWidget *parent) : QWidget(parent) {
     auto *layout = new QVBoxLayout(this);
 
-    // Alert configuration
     auto *alertGroup = new QGroupBox("Alert Thresholds");
     alertGroup->setStyleSheet("QGroupBox { color: white; font-weight: bold; }");
     auto *alertLayout = new QHBoxLayout(alertGroup);
 
-    cpuAlertCheck = new QCheckBox("CPU >");
-    cpuAlertCheck->setChecked(true);
-    cpuAlertCheck->setStyleSheet("color: white;");
-    cpuThreshSpin = new QSpinBox();
-    cpuThreshSpin->setRange(1, 100);
-    cpuThreshSpin->setValue(90);
-    cpuThreshSpin->setSuffix("%");
-    cpuThreshSpin->setStyleSheet("padding: 3px; background: #333; color: white; border: 1px solid #555;");
-    alertLayout->addWidget(cpuAlertCheck);
-    alertLayout->addWidget(cpuThreshSpin);
-
-    alertLayout->addSpacing(12);
-
-    memAlertCheck = new QCheckBox("Memory >");
-    memAlertCheck->setChecked(true);
-    memAlertCheck->setStyleSheet("color: white;");
-    memThreshSpin = new QSpinBox();
-    memThreshSpin->setRange(1, 100);
-    memThreshSpin->setValue(90);
-    memThreshSpin->setSuffix("%");
-    memThreshSpin->setStyleSheet("padding: 3px; background: #333; color: white; border: 1px solid #555;");
-    alertLayout->addWidget(memAlertCheck);
-    alertLayout->addWidget(memThreshSpin);
-
-    alertLayout->addSpacing(12);
-
-    diskAlertCheck = new QCheckBox("Disk >");
-    diskAlertCheck->setChecked(true);
-    diskAlertCheck->setStyleSheet("color: white;");
-    diskThreshSpin = new QSpinBox();
-    diskThreshSpin->setRange(1, 100);
-    diskThreshSpin->setValue(90);
-    diskThreshSpin->setSuffix("%");
-    diskThreshSpin->setStyleSheet("padding: 3px; background: #333; color: white; border: 1px solid #555;");
-    alertLayout->addWidget(diskAlertCheck);
-    alertLayout->addWidget(diskThreshSpin);
-
+    auto addAlert = [&](const QString &label, QCheckBox *&check, QSpinBox *&spin) {
+        check = new QCheckBox(label);
+        check->setChecked(true);
+        check->setStyleSheet("color: white;");
+        spin = new QSpinBox();
+        spin->setRange(1, 100);
+        spin->setValue(90);
+        spin->setSuffix("%");
+        spin->setStyleSheet("padding: 3px; background: #333; color: white; border: 1px solid #555;");
+        alertLayout->addWidget(check);
+        alertLayout->addWidget(spin);
+        alertLayout->addSpacing(12);
+    };
+    addAlert("CPU >", cpuAlertCheck, cpuThreshSpin);
+    addAlert("Memory >", memAlertCheck, memThreshSpin);
+    addAlert("Disk >", diskAlertCheck, diskThreshSpin);
     alertLayout->addStretch();
     layout->addWidget(alertGroup);
 
-    // Log view
     logView = new QTextEdit(this);
     logView->setReadOnly(true);
     logView->setStyleSheet(
@@ -64,8 +41,10 @@ LogsTab::LogsTab(QWidget *parent) : QWidget(parent) {
         "font-size: 12px; border: 1px solid #444;");
     layout->addWidget(logView);
 
-    // Buttons
     auto *btnLayout = new QHBoxLayout();
+    snapshotCountLabel = new QLabel("");
+    snapshotCountLabel->setStyleSheet("color: #78909C; font-size: 11px;");
+    btnLayout->addWidget(snapshotCountLabel);
     btnLayout->addStretch();
 
     exportBtn = new QPushButton("Export Stats (CSV)");
@@ -77,7 +56,6 @@ LogsTab::LogsTab(QWidget *parent) : QWidget(parent) {
     clearBtn->setStyleSheet("padding: 6px 16px; background: #555; color: white; border: none; border-radius: 4px;");
     connect(clearBtn, &QPushButton::clicked, this, &LogsTab::onClear);
     btnLayout->addWidget(clearBtn);
-
     layout->addLayout(btnLayout);
 
     appendLog("System Monitor started.");
@@ -89,39 +67,25 @@ void LogsTab::appendLog(const QString &msg) {
 }
 
 void LogsTab::checkAlerts(double cpuPct, double memPct, double diskMaxPct) {
-    // CPU alert
-    if (cpuAlertCheck->isChecked() && cpuPct > cpuThreshSpin->value()) {
-        if (cpuAlertCooldown <= 0) {
-            appendLog(QString("<span style='color:#EF5350;'>⚠ ALERT: CPU usage at %1% (threshold: %2%)</span>")
-                .arg(cpuPct, 0, 'f', 1).arg(cpuThreshSpin->value()));
-            cpuAlertCooldown = COOLDOWN_TICKS;
+    auto check = [this](QCheckBox *enabled, QSpinBox *thresh, double value, int &cooldown, const char *what) {
+        if (enabled->isChecked() && value > thresh->value() && cooldown <= 0) {
+            appendLog(QString("<span style='color:#EF5350;'>⚠ ALERT: %1 usage at %2% (threshold: %3%)</span>")
+                .arg(what).arg(value, 0, 'f', 1).arg(thresh->value()));
+            cooldown = COOLDOWN_TICKS;
         }
-    }
-    if (cpuAlertCooldown > 0) cpuAlertCooldown--;
-
-    // Memory alert
-    if (memAlertCheck->isChecked() && memPct > memThreshSpin->value()) {
-        if (memAlertCooldown <= 0) {
-            appendLog(QString("<span style='color:#EF5350;'>⚠ ALERT: Memory usage at %1% (threshold: %2%)</span>")
-                .arg(memPct, 0, 'f', 1).arg(memThreshSpin->value()));
-            memAlertCooldown = COOLDOWN_TICKS;
-        }
-    }
-    if (memAlertCooldown > 0) memAlertCooldown--;
-
-    // Disk alert
-    if (diskAlertCheck->isChecked() && diskMaxPct > diskThreshSpin->value()) {
-        if (diskAlertCooldown <= 0) {
-            appendLog(QString("<span style='color:#EF5350;'>⚠ ALERT: Disk usage at %1% (threshold: %2%)</span>")
-                .arg(diskMaxPct, 0, 'f', 1).arg(diskThreshSpin->value()));
-            diskAlertCooldown = COOLDOWN_TICKS;
-        }
-    }
-    if (diskAlertCooldown > 0) diskAlertCooldown--;
+        if (cooldown > 0) cooldown--;
+    };
+    check(cpuAlertCheck, cpuThreshSpin, cpuPct, cpuAlertCooldown, "CPU");
+    check(memAlertCheck, memThreshSpin, memPct, memAlertCooldown, "Memory");
+    check(diskAlertCheck, diskThreshSpin, diskMaxPct, diskAlertCooldown, "Disk");
 }
 
 void LogsTab::recordSnapshot(const SystemSnapshot &snap) {
     snapshots.push_back(snap);
+    while (snapshots.size() > MAX_SNAPSHOTS) snapshots.pop_front();
+    if (snapshots.size() % 10 == 1)
+        snapshotCountLabel->setText(QString("%1 samples since %2")
+            .arg(snapshots.size()).arg(snapshots.front().time.toString("hh:mm:ss")));
 }
 
 void LogsTab::onExport() {
@@ -129,11 +93,8 @@ void LogsTab::onExport() {
         QMessageBox::information(this, "Export", "No data collected yet. Wait a few seconds and try again.");
         return;
     }
-
     QString filename = QFileDialog::getSaveFileName(this, "Export Statistics",
-        QDateTime::currentDateTime().toString("'sysmon_'yyyyMMdd_HHmmss'.csv'"),
-        "CSV Files (*.csv)");
-
+        QDateTime::currentDateTime().toString("'sysmon_'yyyyMMdd_HHmmss'.csv'"), "CSV Files (*.csv)");
     if (filename.isEmpty()) return;
 
     QFile file(filename);
@@ -141,20 +102,10 @@ void LogsTab::onExport() {
         QMessageBox::warning(this, "Error", "Could not open file for writing.");
         return;
     }
-
     QTextStream out(&file);
     out << "Timestamp,CPU%,MemUsedMB,MemTotalMB,NetRxBps,NetTxBps,DiskReadBps,DiskWriteBps,ProcessCount\n";
-
-    QString startTime = QDateTime::currentDateTime()
-        .addSecs(-static_cast<int>(snapshots.size()) * 1.5)
-        .toString("yyyy-MM-dd hh:mm:ss");
-
-    for (size_t i = 0; i < snapshots.size(); ++i) {
-        const auto &s = snapshots[i];
-        QString ts = QDateTime::currentDateTime()
-            .addSecs(-static_cast<int>((snapshots.size() - i) * 1.5))
-            .toString("yyyy-MM-dd hh:mm:ss");
-        out << ts << ","
+    for (const auto &s : snapshots) {
+        out << s.time.toString("yyyy-MM-dd hh:mm:ss") << ","
             << QString::number(s.cpuPct, 'f', 1) << ","
             << QString::number(s.memUsedMB, 'f', 0) << ","
             << QString::number(s.memTotalMB, 'f', 0) << ","
@@ -164,7 +115,6 @@ void LogsTab::onExport() {
             << QString::number(s.diskWriteBps, 'f', 0) << ","
             << s.processCount << "\n";
     }
-
     file.close();
     appendLog(QString("Exported %1 snapshots to %2").arg(snapshots.size()).arg(filename));
     QMessageBox::information(this, "Export Complete",

@@ -25,9 +25,12 @@ void DiskMonitor::readFilesystems() {
         std::string dev, mount, fs;
         ss >> dev >> mount >> fs;
 
-        // Only show real block devices
+        // Only show real block devices, once each (bind mounts repeat a device)
         if (dev.find("/dev/") != 0) continue;
         if (dev.find("/dev/loop") == 0) continue;
+        bool seen = false;
+        for (const auto &d : diskList) if (d.device == dev) { seen = true; break; }
+        if (seen) continue;
 
         struct statvfs stat;
         if (statvfs(mount.c_str(), &stat) != 0) continue;
@@ -59,12 +62,13 @@ void DiskMonitor::readIO() {
         std::string name;
         ss >> major >> minor >> name;
 
-        // Only count whole-disk devices (sd*, nvme*n*, vd*)
-        // Skip partitions like sda1, nvme0n1p1
+        // Only count whole-disk devices (sd*, nvme*n*, vd*, mmcblk*)
+        // Skip partitions like sda1, nvme0n1p1, mmcblk0p1
         bool isDisk = false;
         if (name.find("sd") == 0 && name.length() == 3) isDisk = true;
         if (name.find("nvme") == 0 && name.find('p') == std::string::npos) isDisk = true;
         if (name.find("vd") == 0 && name.length() == 3) isDisk = true;
+        if (name.find("mmcblk") == 0 && name.find('p') == std::string::npos) isDisk = true;
         if (!isDisk) continue;
 
         // Fields: reads_completed, reads_merged, sectors_read, ms_reading,
@@ -80,10 +84,10 @@ void DiskMonitor::readIO() {
     if (prevTimestamp > 0) {
         double elapsed = (now - prevTimestamp) / 1000.0;
         if (elapsed > 0) {
-            readRate = (totalRead - prevReadBytes) / elapsed;
-            writeRate = (totalWrite - prevWriteBytes) / elapsed;
-            if (readRate < 0) readRate = 0;
-            if (writeRate < 0) writeRate = 0;
+            // Counters are unsigned: a device that disappeared makes the total
+            // go down, and the subtraction would wrap to a huge number.
+            readRate = (totalRead >= prevReadBytes) ? (totalRead - prevReadBytes) / elapsed : 0.0;
+            writeRate = (totalWrite >= prevWriteBytes) ? (totalWrite - prevWriteBytes) / elapsed : 0.0;
         }
     }
 
