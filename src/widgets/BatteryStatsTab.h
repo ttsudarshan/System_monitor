@@ -1,16 +1,15 @@
 #pragma once
 
-#include <QWidget>
-#include <QTreeWidget>
-#include <QLabel>
-#include <QPushButton>
-#include <QProgressBar>
+#include "Snapshot.h"
+
 #include <QComboBox>
+#include <QLabel>
+#include <QProgressBar>
+#include <QTreeWidget>
+#include <QWidget>
 #include <QtCharts/QChartView>
 #include <QtCharts/QLineSeries>
 #include <QtCharts/QValueAxis>
-#include "monitors/EnergyMonitor.h"
-#include "monitors/BatteryTracker.h"
 #include <deque>
 
 class BatteryStatsTab : public QWidget {
@@ -18,11 +17,7 @@ class BatteryStatsTab : public QWidget {
 
 public:
     explicit BatteryStatsTab(QWidget *parent = nullptr);
-    void update(const EnergyMonitor &energy, const BatteryTracker &tracker);
-
-private slots:
-    void onSortChanged(int index);
-    void onViewChanged(int index);
+    void update(const Snapshot &s);
 
 private:
     // Hardware + battery bar (compact top strip)
@@ -43,17 +38,16 @@ private:
     int powerTick = 0;
     static constexpr int MAX_POINTS = 60;
 
-    // Main drain table (takes most space)
+    // Main drain table
     QTreeWidget *drainTree;
     QComboBox *viewCombo;  // Live / Today / Week
-    QComboBox *sortCombo;
+    QComboBox *sortCombo;  // By Power / By Energy
     QLabel *drainSummaryLabel;
-    int viewMode = 0;
-    int sortMode = 0;
+    QLabel *noteLabel;
 
     void setupUI();
-    void populateLive(const EnergyMonitor &energy);
-    void populateHistory(const BatteryTracker &tracker, bool weekly);
+    void populateLive(const Snapshot &s);
+    void populateHistory(const std::vector<AppEnergyTotal> &data, bool weekly);
 
     static QString formatPower(double watts);
     static QString formatEnergy(double joules);

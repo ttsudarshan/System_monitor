@@ -1,9 +1,9 @@
 #include "BatteryStatsTab.h"
-#include <QVBoxLayout>
+#include "core/AppNames.h"
+
 #include <QHBoxLayout>
 #include <QHeaderView>
-#include <QScrollArea>
-#include <QDate>
+#include <QVBoxLayout>
 #include <algorithm>
 
 BatteryStatsTab::BatteryStatsTab(QWidget *parent) : QWidget(parent) {
@@ -24,7 +24,7 @@ QString BatteryStatsTab::formatEnergy(double joules) {
 }
 
 QString BatteryStatsTab::formatWh(double wh) {
-    if (wh >= 1.0) return QString("%1 Wh").arg(wh, 0, 'f', 1);
+    if (wh >= 1.0) return QString("%1 Wh").arg(wh, 0, 'f', 2);
     if (wh >= 0.001) return QString("%1 mWh").arg(wh * 1000, 0, 'f', 1);
     return "0 Wh";
 }
@@ -32,7 +32,7 @@ QString BatteryStatsTab::formatWh(double wh) {
 QString BatteryStatsTab::makeBar(double value, double maxValue, int maxLen) {
     if (maxValue <= 0 || value <= 0) return "";
     int len = static_cast<int>((value / maxValue) * maxLen);
-    if (len < 1 && value > 0) len = 1;
+    if (len < 1) len = 1;
     if (len > maxLen) len = maxLen;
     return QString(len, QChar(0x2588));
 }
@@ -42,7 +42,7 @@ void BatteryStatsTab::setupUI() {
     mainLayout->setSpacing(6);
     mainLayout->setContentsMargins(8, 8, 8, 8);
 
-    // ═══ Compact Top: CPU + Battery + Power (single row) ═══
+    // ═══ Compact top: CPU + battery + power ═══
     auto *topBar = new QWidget();
     topBar->setStyleSheet("background: #16213e; border-radius: 6px;");
     topBar->setMaximumHeight(70);
@@ -50,7 +50,6 @@ void BatteryStatsTab::setupUI() {
     topLayout->setContentsMargins(10, 6, 10, 6);
     topLayout->setSpacing(4);
 
-    // Row 1: CPU info + energy source
     auto *row1 = new QHBoxLayout();
     cpuInfoLabel = new QLabel("Detecting CPU...");
     cpuInfoLabel->setStyleSheet("color: #4FC3F7; font-size: 11px; font-weight: bold;");
@@ -61,40 +60,29 @@ void BatteryStatsTab::setupUI() {
     row1->addWidget(energySourceLabel);
     topLayout->addLayout(row1);
 
-    // Row 2: Battery bar + power readings + time
     auto *row2 = new QHBoxLayout();
     row2->setSpacing(10);
-
     batteryBar = new QProgressBar();
     batteryBar->setRange(0, 100);
     batteryBar->setTextVisible(true);
     batteryBar->setFormat("%p%");
     batteryBar->setFixedWidth(120);
     batteryBar->setFixedHeight(20);
-    batteryBar->setStyleSheet(
-        "QProgressBar { background: #263238; border: 1px solid #37474F; border-radius: 4px;"
-        "text-align: center; color: white; font-size: 11px; font-weight: bold; }"
-        "QProgressBar::chunk { background: #43A047; border-radius: 3px; }");
     row2->addWidget(batteryBar);
-
     batteryStatusLabel = new QLabel("—");
     batteryStatusLabel->setStyleSheet("color: #B0BEC5; font-size: 11px;");
     row2->addWidget(batteryStatusLabel);
-
     powerReadingsLabel = new QLabel("");
     powerReadingsLabel->setStyleSheet("color: #78909C; font-size: 11px;");
     row2->addWidget(powerReadingsLabel);
-
     row2->addStretch();
-
     timeRemainingLabel = new QLabel("");
     timeRemainingLabel->setStyleSheet("color: #FFB74D; font-size: 11px; font-weight: bold;");
     row2->addWidget(timeRemainingLabel);
-
     topLayout->addLayout(row2);
     mainLayout->addWidget(topBar);
 
-    // ═══ Small Power Chart ═══
+    // ═══ Small power chart ═══
     auto *chartWidget = new QWidget();
     chartWidget->setStyleSheet("background: #1a1a2e; border-radius: 6px;");
     chartWidget->setMaximumHeight(120);
@@ -115,16 +103,19 @@ void BatteryStatsTab::setupUI() {
     chart->legend()->setLabelColor(Qt::white);
     chart->legend()->setAlignment(Qt::AlignRight);
     chart->setMargins(QMargins(2, 2, 2, 2));
+    chart->setAnimationOptions(QChart::NoAnimation);
 
     powerAxisX = new QValueAxis();
     powerAxisX->setRange(0, MAX_POINTS);
     powerAxisX->setVisible(false);
     powerAxisY = new QValueAxis();
     powerAxisY->setRange(0, 20);
-    powerAxisY->setLabelFormat("%.0f W");
+    powerAxisY->setLabelFormat("%.1f W");
+    powerAxisY->setTickCount(3);
+    powerAxisY->setTruncateLabels(false);
+    powerAxisY->setLabelsFont(QFont("", 8));
     powerAxisY->setLabelsColor(QColor(100, 120, 140));
     powerAxisY->setGridLineColor(QColor(40, 40, 60));
-
     chart->addAxis(powerAxisX, Qt::AlignBottom);
     chart->addAxis(powerAxisY, Qt::AlignLeft);
     packageSeries->attachAxis(powerAxisX);
@@ -137,69 +128,57 @@ void BatteryStatsTab::setupUI() {
     chartLayout->addWidget(powerChartView);
     mainLayout->addWidget(chartWidget);
 
-    // ═══ Per-App Drain (MAIN SECTION — takes all remaining space) ═══
+    // ═══ Per-app drain ═══
     auto *drainWidget = new QWidget();
     drainWidget->setStyleSheet("background: #1a1a2e; border-radius: 6px;");
     auto *drainLayout = new QVBoxLayout(drainWidget);
     drainLayout->setContentsMargins(8, 8, 8, 8);
     drainLayout->setSpacing(6);
 
-    // Header row
     auto *headerRow = new QHBoxLayout();
-
     drainSummaryLabel = new QLabel("APPLICATION ENERGY DRAIN");
     drainSummaryLabel->setStyleSheet("color: #78909C; font-size: 11px; font-weight: bold;");
     headerRow->addWidget(drainSummaryLabel);
     headerRow->addStretch();
 
-    viewCombo = new QComboBox();
-    viewCombo->addItem("Live");
-    viewCombo->addItem("Today");
-    viewCombo->addItem("This Week");
-    viewCombo->setMinimumWidth(120);
-    viewCombo->setStyleSheet(
+    const char *comboStyle =
         "QComboBox { padding: 5px 12px; background: #263238; color: white;"
         "border: 1px solid #37474F; border-radius: 4px; font-size: 12px; }"
         "QComboBox::drop-down { border: none; }"
         "QComboBox QAbstractItemView { background: #263238; color: white;"
-        "selection-background-color: #1565C0; padding: 4px; }");
-    connect(viewCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &BatteryStatsTab::onViewChanged);
-    headerRow->addWidget(viewCombo);
+        "selection-background-color: #1565C0; padding: 4px; }";
 
+    viewCombo = new QComboBox();
+    viewCombo->addItems({"Live", "Today", "This Week"});
+    viewCombo->setMinimumWidth(120);
+    viewCombo->setStyleSheet(comboStyle);
+    headerRow->addWidget(viewCombo);
     headerRow->addSpacing(8);
 
     sortCombo = new QComboBox();
-    sortCombo->addItem("By Energy");
-    sortCombo->addItem("By Share %");
-    sortCombo->setMinimumWidth(120);
-    sortCombo->setStyleSheet(
-        "QComboBox { padding: 5px 12px; background: #263238; color: white;"
-        "border: 1px solid #37474F; border-radius: 4px; font-size: 12px; }"
-        "QComboBox::drop-down { border: none; }"
-        "QComboBox QAbstractItemView { background: #263238; color: white;"
-        "selection-background-color: #1565C0; padding: 4px; }");
-    connect(sortCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            this, &BatteryStatsTab::onSortChanged);
+    sortCombo->addItems({"By Power", "By Session Energy"});
+    sortCombo->setMinimumWidth(150);
+    sortCombo->setStyleSheet(comboStyle);
     headerRow->addWidget(sortCombo);
-
     drainLayout->addLayout(headerRow);
 
-    // The tree
+    noteLabel = new QLabel("");
+    noteLabel->setStyleSheet("color: #FFA726; font-size: 11px;");
+    noteLabel->setWordWrap(true);
+    noteLabel->hide();
+    drainLayout->addWidget(noteLabel);
+
     drainTree = new QTreeWidget();
     drainTree->setColumnCount(5);
-    drainTree->setHeaderLabels({"Application", "Power", "Share", "Today / Total", ""});
+    drainTree->setHeaderLabels({"Application", "Power", "Share", "Session", ""});
     drainTree->setRootIsDecorated(false);
-    drainTree->setAlternatingRowColors(false);
     drainTree->setUniformRowHeights(true);
-
     drainTree->header()->setSectionResizeMode(0, QHeaderView::Interactive);
     drainTree->header()->setSectionResizeMode(4, QHeaderView::Stretch);
     drainTree->setColumnWidth(0, 180);
-    drainTree->setColumnWidth(1, 80);
+    drainTree->setColumnWidth(1, 100);
     drainTree->setColumnWidth(2, 60);
     drainTree->setColumnWidth(3, 100);
-
     drainTree->setStyleSheet(
         "QTreeWidget { background: transparent; border: none; font-size: 12px; }"
         "QTreeWidget::item { padding: 5px 8px; min-height: 26px; border-bottom: 1px solid #252545; }"
@@ -207,195 +186,167 @@ void BatteryStatsTab::setupUI() {
         "QTreeWidget::item:hover:!selected { background: #252545; }"
         "QHeaderView::section { background: #16213e; color: #546E7A; padding: 5px 8px;"
         "border: none; border-bottom: 2px solid #1565C0; font-size: 10px; font-weight: bold; }");
-
     drainLayout->addWidget(drainTree, 1);
-
-    mainLayout->addWidget(drainWidget, 1); // stretch factor 1 = takes all remaining space
+    mainLayout->addWidget(drainWidget, 1);
 }
 
-void BatteryStatsTab::onSortChanged(int index) { sortMode = index; }
-void BatteryStatsTab::onViewChanged(int index) { viewMode = index; }
-
-void BatteryStatsTab::populateLive(const EnergyMonitor &energy) {
+void BatteryStatsTab::populateLive(const Snapshot &s) {
     drainTree->setHeaderLabels({"Application", "Power", "Share", "Session", ""});
+    sortCombo->setEnabled(true);
     drainTree->clear();
 
-    auto apps = energy.perAppEnergy();
-    if (sortMode == 1)
-        std::sort(apps.begin(), apps.end(),
-            [](const EnergyMonitor::AppEnergy &a, const EnergyMonitor::AppEnergy &b) {
-                return a.percent > b.percent; });
+    auto apps = s.liveEnergy;
+    bool bySessionEnergy = sortCombo->currentIndex() == 1;
+    if (bySessionEnergy)
+        std::sort(apps.begin(), apps.end(), [](const auto &a, const auto &b) {
+            return a.energyJoules > b.energyJoules; });
 
-    double maxVal = apps.empty() ? 1.0 : apps[0].watts;
-    if (maxVal < 0.001) maxVal = 1.0;
-
+    double maxVal = 1.0;
+    for (const auto &a : apps) maxVal = std::max(maxVal, bySessionEnergy ? a.energyJoules : a.percent);
     double totalW = 0;
     for (const auto &a : apps) totalW += a.watts;
 
     for (const auto &app : apps) {
         auto *item = new QTreeWidgetItem();
-        item->setText(0, QString::fromStdString(app.appName));
-        item->setText(1, formatPower(app.watts));
+        item->setText(0, QString::fromStdString(AppNames::display(app.app)));
+        item->setText(1, s.powerSource == EnergyMonitor::PowerSource::None ? "—" : formatPower(app.watts));
         item->setText(2, QString("%1%").arg(app.percent, 0, 'f', 1));
         item->setText(3, formatEnergy(app.energyJoules));
-        item->setText(4, makeBar(app.watts, maxVal));
+        item->setText(4, makeBar(bySessionEnergy ? app.energyJoules : app.percent, maxVal));
 
-        QColor barColor(100, 181, 246);
-        QColor textColor(180, 180, 180);
+        QColor barColor(100, 181, 246), textColor(180, 180, 180);
         if (app.percent > 40) { barColor = QColor(239, 83, 80); textColor = barColor; }
         else if (app.percent > 20) { barColor = QColor(255, 167, 38); textColor = barColor; }
         else if (app.percent > 10) { barColor = QColor(255, 241, 118); textColor = barColor; }
-
         item->setForeground(0, QColor(220, 220, 220));
         item->setForeground(1, textColor);
         item->setForeground(2, textColor);
         item->setForeground(3, QColor(120, 120, 120));
         item->setForeground(4, barColor);
-
         drainTree->addTopLevelItem(item);
     }
 
-    drainSummaryLabel->setText(QString("LIVE POWER DRAIN  —  %1 apps  —  Total: %2")
-        .arg(apps.size()).arg(formatPower(totalW)));
+    QString source;
+    switch (s.powerSource) {
+        case EnergyMonitor::PowerSource::Rapl: source = "attributing CPU package power"; break;
+        case EnergyMonitor::PowerSource::Battery: source = "attributing battery discharge"; break;
+        default: source = "CPU share only"; break;
+    }
+    drainSummaryLabel->setText(QString("LIVE  —  %1 apps  —  %2  —  %3")
+        .arg(apps.size()).arg(formatPower(totalW)).arg(source));
+
+    if (s.powerSource == EnergyMonitor::PowerSource::None) {
+        noteLabel->setText(s.hwEnergy
+            ? "No power reading this tick; showing CPU share only."
+            : "No hardware power counter is readable and the battery is not discharging, so only "
+              "CPU share is shown. See the README for the RAPL udev rule.");
+        noteLabel->show();
+    } else {
+        noteLabel->hide();
+    }
 }
 
-void BatteryStatsTab::populateHistory(const BatteryTracker &tracker, bool weekly) {
-    drainTree->setHeaderLabels({"Application", "Energy", "Share", weekly ? "Weekly" : "Today", ""});
+void BatteryStatsTab::populateHistory(const std::vector<AppEnergyTotal> &data, bool weekly) {
+    drainTree->setHeaderLabels({"Application", "Energy", "Share", weekly ? "This Week" : "Today", ""});
+    sortCombo->setEnabled(false);  // history is always ordered by energy
     drainTree->clear();
+    noteLabel->hide();
 
-    auto data = weekly
-        ? tracker.weeklyStats()
-        : tracker.dailyStats(QDate::currentDate().toString("yyyy-MM-dd").toStdString());
-
-    double totalWh = 0;
-    for (const auto &d : data) totalWh += d.totalWh;
-
-    if (sortMode == 1 && totalWh > 0) {
-        // Already sorted by totalWh desc from tracker, but re-sort by share
-        // (same thing since share = totalWh/total)
-    }
-
-    double maxWh = data.empty() ? 1.0 : data[0].totalWh;
-    if (maxWh < 0.000001) maxWh = 1.0;
+    double totalWh = 0, maxWh = 0;
+    for (const auto &d : data) { totalWh += d.wattHours; maxWh = std::max(maxWh, d.wattHours); }
+    if (maxWh <= 0) maxWh = 1.0;
 
     for (const auto &d : data) {
+        double pct = (totalWh > 0) ? (d.wattHours / totalWh) * 100.0 : 0.0;
         auto *item = new QTreeWidgetItem();
-        double pct = (totalWh > 0) ? (d.totalWh / totalWh) * 100.0 : 0.0;
-
-        item->setText(0, QString::fromStdString(d.appName));
-        item->setText(1, formatWh(d.totalWh));
+        item->setText(0, QString::fromStdString(AppNames::display(d.app)));
+        item->setText(1, formatWh(d.wattHours));
         item->setText(2, QString("%1%").arg(pct, 0, 'f', 1));
-        item->setText(3, formatWh(d.totalWh));
-        item->setText(4, makeBar(d.totalWh, maxWh));
+        item->setText(3, formatWh(d.wattHours));
+        item->setText(4, makeBar(d.wattHours, maxWh));
 
         QColor barColor = weekly ? QColor(206, 147, 216) : QColor(79, 195, 247);
         QColor textColor(180, 180, 180);
         if (pct > 40) { barColor = QColor(239, 83, 80); textColor = barColor; }
         else if (pct > 20) { barColor = QColor(255, 167, 38); textColor = barColor; }
         else if (pct > 10) { barColor = QColor(255, 241, 118); textColor = barColor; }
-
         item->setForeground(0, QColor(220, 220, 220));
         item->setForeground(1, weekly ? QColor(206, 147, 216) : QColor(79, 195, 247));
         item->setForeground(2, textColor);
         item->setForeground(3, QColor(120, 120, 120));
         item->setForeground(4, barColor);
-
         drainTree->addTopLevelItem(item);
     }
 
-    QString period = weekly ? "THIS WEEK" : "TODAY";
     drainSummaryLabel->setText(QString("%1 ENERGY  —  %2 apps  —  Total: %3")
-        .arg(period).arg(data.size()).arg(formatWh(totalWh)));
+        .arg(weekly ? "THIS WEEK" : "TODAY").arg(data.size()).arg(formatWh(totalWh)));
 }
 
-void BatteryStatsTab::update(const EnergyMonitor &energy, const BatteryTracker &tracker) {
-    // CPU info
-    cpuInfoLabel->setText(QString("%1 %2 (%3 cores)")
-        .arg(QString::fromStdString(energy.vendorName()))
-        .arg(QString::fromStdString(energy.cpuModelName()))
-        .arg(energy.coreCount()));
+void BatteryStatsTab::update(const Snapshot &s) {
+    QString model = QString::fromStdString(s.cpuModel);
+    QString vendor = QString::fromStdString(s.cpuVendor);
+    // "model name" in /proc/cpuinfo usually already starts with the vendor
+    if (model.startsWith(vendor, Qt::CaseInsensitive) || vendor == "Unknown") vendor.clear();
+    cpuInfoLabel->setText(QString("%1%2 (%3 cores)")
+        .arg(vendor.isEmpty() ? "" : vendor + " ", model).arg(s.cpuCores));
 
-    if (energy.hasHardwareEnergy()) {
-        QString src = (energy.vendor() == EnergyMonitor::CpuVendor::Intel) ? "Intel RAPL" : "AMD RAPL";
-        energySourceLabel->setText(src);
+    if (s.hwEnergy) {
+        energySourceLabel->setText(s.cpuVendor == "AMD" ? "AMD RAPL" : "Intel RAPL");
         energySourceLabel->setStyleSheet("color: #81C784; font-size: 11px;");
     } else {
-        energySourceLabel->setText("CPU estimate");
+        energySourceLabel->setText("No hardware power counter");
         energySourceLabel->setStyleSheet("color: #FFA726; font-size: 11px;");
     }
 
-    // Battery
-    if (energy.hasBattery()) {
-        int pct = static_cast<int>(energy.batteryPercent());
-        batteryBar->setValue(pct);
+    QString powerText = s.hwEnergy
+        ? QString("Pkg: %1  |  Core: %2  |  DRAM: %3")
+              .arg(formatPower(s.packageW), formatPower(s.coreW), formatPower(s.dramW))
+        : QString();
 
-        QString chunk = "#43A047";
-        if (pct <= 20) chunk = "#C62828";
-        else if (pct <= 60) chunk = "#E65100";
+    if (s.hasBattery) {
+        int pct = static_cast<int>(s.batteryPct);
+        batteryBar->setValue(pct);
+        QString chunk = pct <= 20 ? "#C62828" : pct <= 60 ? "#E65100" : "#43A047";
         batteryBar->setStyleSheet(
             QString("QProgressBar { background: #263238; border: 1px solid #37474F; border-radius: 4px;"
                     "text-align: center; color: white; font-size: 11px; font-weight: bold; }"
                     "QProgressBar::chunk { background: %1; border-radius: 3px; }").arg(chunk));
-
-        batteryStatusLabel->setText(QString::fromStdString(energy.batteryStatus()));
-
-        // Power readings inline
-        QString powerText;
-        if (energy.hasHardwareEnergy()) {
-            powerText = QString("Pkg: %1  |  Core: %2  |  DRAM: %3")
-                .arg(formatPower(energy.packagePowerW()))
-                .arg(formatPower(energy.corePowerW()))
-                .arg(formatPower(energy.dramPowerW()));
-        } else {
-            powerText = QString("Draw: %1").arg(formatPower(energy.batteryPowerW()));
-        }
-        powerReadingsLabel->setText(powerText);
-
-        int mins = energy.estimatedMinutesRemaining();
-        if (mins > 0)
-            timeRemainingLabel->setText(QString("~%1h %2m left").arg(mins / 60).arg(mins % 60));
-        else
-            timeRemainingLabel->setText("");
+        batteryStatusLabel->setText(QString::fromStdString(s.batteryStatus));
+        if (powerText.isEmpty()) powerText = QString("Draw: %1").arg(formatPower(s.batteryPowerW));
+        else powerText += QString("  |  Battery: %1").arg(formatPower(s.batteryPowerW));
+        timeRemainingLabel->setText(s.batteryMinutesLeft > 0
+            ? QString("~%1h %2m left").arg(s.batteryMinutesLeft / 60).arg(s.batteryMinutesLeft % 60)
+            : QString());
     } else {
         batteryBar->setValue(0);
         batteryStatusLabel->setText("AC");
-        powerReadingsLabel->setText(energy.hasHardwareEnergy()
-            ? QString("Pkg: %1  |  Core: %2  |  DRAM: %3")
-                .arg(formatPower(energy.packagePowerW()))
-                .arg(formatPower(energy.corePowerW()))
-                .arg(formatPower(energy.dramPowerW()))
-            : "");
         timeRemainingLabel->setText("");
     }
+    powerReadingsLabel->setText(powerText);
 
     // Power chart
-    double pkg = energy.packagePowerW();
-    double core = energy.corePowerW();
-    packageHistory.push_back(pkg);
-    coreHistory.push_back(core);
+    packageHistory.push_back(s.packageW);
+    coreHistory.push_back(s.coreW);
     if (static_cast<int>(packageHistory.size()) > MAX_POINTS) packageHistory.pop_front();
     if (static_cast<int>(coreHistory.size()) > MAX_POINTS) coreHistory.pop_front();
     powerTick++;
 
-    packageSeries->clear();
-    coreSeries->clear();
+    QList<QPointF> pkgPts, corePts;
     int start = powerTick - static_cast<int>(packageHistory.size());
     double maxY = 5.0;
     for (int i = 0; i < static_cast<int>(packageHistory.size()); ++i) {
-        packageSeries->append(start + i, packageHistory[i]);
-        if (packageHistory[i] > maxY) maxY = packageHistory[i];
+        pkgPts.append(QPointF(start + i, packageHistory[i]));
+        corePts.append(QPointF(start + i, coreHistory[i]));
+        maxY = std::max({maxY, packageHistory[i], coreHistory[i]});
     }
-    for (int i = 0; i < static_cast<int>(coreHistory.size()); ++i) {
-        coreSeries->append(start + i, coreHistory[i]);
-        if (coreHistory[i] > maxY) maxY = coreHistory[i];
-    }
+    packageSeries->replace(pkgPts);
+    coreSeries->replace(corePts);
     powerAxisX->setRange(powerTick - MAX_POINTS, powerTick);
     powerAxisY->setRange(0, maxY * 1.2);
 
-    // Drain table — main content
-    switch (viewMode) {
-        case 0: populateLive(energy); break;
-        case 1: populateHistory(tracker, false); break;
-        case 2: populateHistory(tracker, true); break;
+    switch (viewCombo->currentIndex()) {
+        case 1: populateHistory(s.energyToday, false); break;
+        case 2: populateHistory(s.energyWeek, true); break;
+        default: populateLive(s); break;
     }
 }
