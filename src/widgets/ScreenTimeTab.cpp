@@ -371,15 +371,15 @@ void ScreenTimeTab::refresh() {
     };
 
     if (showingWeek) {
-        periodLabel->setText("Daily Average");
-        bigTimeLabel->setText(fmtTime(cached.dailyAverageSeconds));
-        totalLabel->setText("Total Screen Time (7 days)");
-        totalTimeLabel->setText(fmtTime(cached.weekSeconds));
+        periodLabel->setText("Total Screen Time (7 days)");
+        bigTimeLabel->setText(fmtTime(cached.weekSeconds));
+        totalLabel->setText("Daily Average");
+        totalTimeLabel->setText(fmtTime(cached.dailyAverageSeconds));
         QDate start = QDate::currentDate().addDays(-6), end = QDate::currentDate();
         changeLabel->setText(QString("%1 – %2").arg(start.toString("MMM d"), end.toString("MMM d")));
         changeLabel->setStyleSheet("color:#8e8e93; font-size:12px;");
         bigTimeLabel->setStyleSheet(QString("color:%1; font-size:34px; font-weight:bold;")
-            .arg(colorFor(cached.dailyAverageSeconds, 6 * 3600, 4 * 3600, 2 * 3600)));
+            .arg(colorFor(cached.weekSeconds, 42 * 3600, 28 * 3600, 14 * 3600)));
         mostUsedTitle->setText("Most Used This Week");
         buildWeekChart();
     } else {

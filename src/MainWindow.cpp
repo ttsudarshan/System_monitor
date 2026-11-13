@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     tabs->addTab(screenTimeTab, "  Screen Time  ");
     tabs->addTab(logsTab, "  Logs  ");
     setCentralWidget(tabs);
+    connect(tabs, &QTabWidget::currentChanged, this, &MainWindow::onTabChanged);
 
     // All sampling (/proc, sysfs, X11, SQLite) happens on the worker thread.
     qRegisterMetaType<Snapshot>("Snapshot");
@@ -58,12 +59,11 @@ void MainWindow::onSnapshot(const Snapshot &s) {
     metricsTab->updateNetwork(s.netRxBps, s.netTxBps, s.netTotalRx, s.netTotalTx);
     metricsTab->updateBattery(s.hasBattery, s.batteryPct, s.batteryStatus, s.batteryPowerW);
 
-    // Only rebuild the heavier tabs when they are visible; the data is in the
-    // snapshot anyway and will be shown as soon as the user switches.
-    QWidget *current = tabs->currentWidget();
-    if (current == processesTab) processesTab->refresh(s.procs);
-    if (current == batteryStatsTab) batteryStatsTab->update(s);
-    if (current == screenTimeTab) screenTimeTab->updateStats(s.screen);
+    // Only rebuild the heavier tabs when they are visible; the snapshot is kept
+    // so the tab the user switches to is filled at once (see onTabChanged).
+    lastSnapshot = s;
+    haveSnapshot = true;
+    refreshTab(tabs->currentWidget(), s);
 
     double memPct = (s.memTotalMB > 0) ? (s.memUsedMB / s.memTotalMB) * 100.0 : 0.0;
     double maxDiskPct = 0.0;
@@ -81,4 +81,14 @@ void MainWindow::onSnapshot(const Snapshot &s) {
     snap.diskWriteBps = s.diskWriteBps;
     snap.processCount = static_cast<int>(s.procs.size());
     logsTab->recordSnapshot(snap);
+}
+
+void MainWindow::refreshTab(QWidget *tab, const Snapshot &s) {
+    if (tab == processesTab) processesTab->refresh(s.procs);
+    else if (tab == batteryStatsTab) batteryStatsTab->update(s);
+    else if (tab == screenTimeTab) screenTimeTab->updateStats(s.screen);
+}
+
+void MainWindow::onTabChanged(int index) {
+    if (haveSnapshot) refreshTab(tabs->widget(index), lastSnapshot);
 }

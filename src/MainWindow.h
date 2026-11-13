@@ -23,6 +23,7 @@ public:
 private slots:
     void requestSample();
     void onSnapshot(const Snapshot &s);
+    void onTabChanged(int index);
 
 private:
     QTabWidget *tabs;
@@ -35,7 +36,11 @@ private:
     QThread workerThread;
     SampleWorker *worker;
     bool samplePending = false;
+    Snapshot lastSnapshot;
+    bool haveSnapshot = false;
 
     QTimer *refreshTimer;
     static constexpr int REFRESH_MS = 1500;
+
+    void refreshTab(QWidget *tab, const Snapshot &s);
 };
