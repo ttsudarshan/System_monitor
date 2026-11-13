@@ -1,31 +1,28 @@
 #pragma once
 
-#include <QMainWindow>
-#include <QTabWidget>
-#include <QTimer>
+#include "SampleWorker.h"
+#include "Snapshot.h"
+#include "widgets/BatteryStatsTab.h"
+#include "widgets/LogsTab.h"
 #include "widgets/MetricsTab.h"
 #include "widgets/ProcessesTab.h"
-#include "widgets/LogsTab.h"
-#include "widgets/BatteryStatsTab.h"
 #include "widgets/ScreenTimeTab.h"
-#include "monitors/CpuMonitor.h"
-#include "monitors/MemoryMonitor.h"
-#include "monitors/DiskMonitor.h"
-#include "monitors/NetworkMonitor.h"
-#include "monitors/BatteryMonitor.h"
-#include "monitors/BatteryTracker.h"
-#include "monitors/EnergyMonitor.h"
-#include "monitors/ScreenTimeTracker.h"
+
+#include <QMainWindow>
+#include <QTabWidget>
+#include <QThread>
+#include <QTimer>
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow() = default;
+    ~MainWindow() override;
 
 private slots:
-    void onRefresh();
+    void requestSample();
+    void onSnapshot(const Snapshot &s);
 
 private:
     QTabWidget *tabs;
@@ -35,14 +32,9 @@ private:
     BatteryStatsTab *batteryStatsTab;
     ScreenTimeTab *screenTimeTab;
 
-    CpuMonitor cpuMonitor;
-    MemoryMonitor memMonitor;
-    DiskMonitor diskMonitor;
-    NetworkMonitor netMonitor;
-    BatteryMonitor battMonitor;
-    BatteryTracker battTracker;
-    EnergyMonitor energyMonitor;
-    ScreenTimeTracker screenTracker;
+    QThread workerThread;
+    SampleWorker *worker;
+    bool samplePending = false;
 
     QTimer *refreshTimer;
     static constexpr int REFRESH_MS = 1500;

@@ -1,6 +1,5 @@
 #include "MainWindow.h"
-#include <QVBoxLayout>
-#include <QDate>
+
 #include <algorithm>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
@@ -19,78 +18,67 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     tabs->addTab(batteryStatsTab, "  Battery  ");
     tabs->addTab(screenTimeTab, "  Screen Time  ");
     tabs->addTab(logsTab, "  Logs  ");
-
     setCentralWidget(tabs);
 
-    // Initial reads
-    cpuMonitor.read();
-    memMonitor.read();
-    diskMonitor.read();
-    netMonitor.read();
-    battMonitor.read();
-    energyMonitor.read();
+    // All sampling (/proc, sysfs, X11, SQLite) happens on the worker thread.
+    qRegisterMetaType<Snapshot>("Snapshot");
+    worker = new SampleWorker();
+    worker->moveToThread(&workerThread);
+    connect(&workerThread, &QThread::finished, worker, &QObject::deleteLater);
+    connect(worker, &SampleWorker::ready, this, &MainWindow::onSnapshot, Qt::QueuedConnection);
+    workerThread.start();
 
     refreshTimer = new QTimer(this);
-    connect(refreshTimer, &QTimer::timeout, this, &MainWindow::onRefresh);
+    connect(refreshTimer, &QTimer::timeout, this, &MainWindow::requestSample);
     refreshTimer->start(REFRESH_MS);
+    requestSample();
 }
 
-void MainWindow::onRefresh() {
-    // Read all monitors
-    cpuMonitor.read();
-    memMonitor.read();
-    diskMonitor.read();
-    netMonitor.read();
-    battMonitor.read();
-    battTracker.tick();
-    energyMonitor.read();
-    screenTracker.tick();
+MainWindow::~MainWindow() {
+    refreshTimer->stop();
+    // Flush pending screen time / energy before the thread goes away.
+    QMetaObject::invokeMethod(worker, "shutdown", Qt::BlockingQueuedConnection);
+    workerThread.quit();
+    workerThread.wait();
+}
 
-    // Update Metrics tab
-    metricsTab->updateCpu(cpuMonitor.overallUsage(), cpuMonitor.perCoreUsage());
-    metricsTab->updateMemory(memMonitor.usedMB(), memMonitor.totalMB(),
-                             memMonitor.swapUsedMB(), memMonitor.swapTotalMB());
-    metricsTab->updateDisk(diskMonitor.disks(),
-                           diskMonitor.readBytesPerSec(), diskMonitor.writeBytesPerSec());
-    metricsTab->updateNetwork(netMonitor.rxBytesPerSec(), netMonitor.txBytesPerSec(),
-                              netMonitor.totalRxBytes(), netMonitor.totalTxBytes());
-    metricsTab->updateBattery(battMonitor.hasBattery(), battMonitor.percent(),
-                              battMonitor.status(), battMonitor.powerDrawWatts());
+void MainWindow::requestSample() {
+    // Never queue up samples: if the worker is still busy, skip this tick.
+    if (samplePending) return;
+    samplePending = true;
+    QMetaObject::invokeMethod(worker, "sample", Qt::QueuedConnection);
+}
 
-    // Update Processes tab
-    processesTab->refresh();
+void MainWindow::onSnapshot(const Snapshot &s) {
+    samplePending = false;
 
-    // Update Battery Stats tab (new energy monitor)
-    batteryStatsTab->update(energyMonitor, battTracker);
+    metricsTab->updateCpu(s.cpuPct, s.perCore);
+    metricsTab->updateMemory(s.memUsedMB, s.memTotalMB, s.swapUsedMB, s.swapTotalMB);
+    metricsTab->updateDisk(s.disks, s.diskReadBps, s.diskWriteBps);
+    metricsTab->updateNetwork(s.netRxBps, s.netTxBps, s.netTotalRx, s.netTotalTx);
+    metricsTab->updateBattery(s.hasBattery, s.batteryPct, s.batteryStatus, s.batteryPowerW);
 
-    // Update Screen Time tab
-    auto todayScreenTime = screenTracker.todayStats();
-    auto weeklyScreenTime = screenTracker.weeklyStats();
-    auto last7 = screenTracker.last7Days();
-    screenTimeTab->updateStats(todayScreenTime, weeklyScreenTime,
-                               screenTracker.totalTodaySeconds(),
-                               screenTracker.totalWeekSeconds(),
-                               screenTracker.currentApp(),
-                               last7,
-                               screenTracker.dailyAverageSeconds());
+    // Only rebuild the heavier tabs when they are visible; the data is in the
+    // snapshot anyway and will be shown as soon as the user switches.
+    QWidget *current = tabs->currentWidget();
+    if (current == processesTab) processesTab->refresh(s.procs);
+    if (current == batteryStatsTab) batteryStatsTab->update(s);
+    if (current == screenTimeTab) screenTimeTab->updateStats(s.screen);
 
-    // Check alerts
-    double memPct = (memMonitor.totalMB() > 0)
-        ? (memMonitor.usedMB() / memMonitor.totalMB()) * 100.0 : 0.0;
+    double memPct = (s.memTotalMB > 0) ? (s.memUsedMB / s.memTotalMB) * 100.0 : 0.0;
     double maxDiskPct = 0.0;
-    for (const auto &d : diskMonitor.disks())
-        maxDiskPct = std::max(maxDiskPct, d.usagePercent);
-    logsTab->checkAlerts(cpuMonitor.overallUsage(), memPct, maxDiskPct);
+    for (const auto &d : s.disks) maxDiskPct = std::max(maxDiskPct, d.usagePercent);
+    logsTab->checkAlerts(s.cpuPct, memPct, maxDiskPct);
 
-    // Record snapshot for export
     LogsTab::SystemSnapshot snap;
-    snap.cpuPct = cpuMonitor.overallUsage();
-    snap.memUsedMB = memMonitor.usedMB();
-    snap.memTotalMB = memMonitor.totalMB();
-    snap.netRxBps = netMonitor.rxBytesPerSec();
-    snap.netTxBps = netMonitor.txBytesPerSec();
-    snap.diskReadBps = diskMonitor.readBytesPerSec();
-    snap.diskWriteBps = diskMonitor.writeBytesPerSec();
-    snap.processCount = 0;
+    snap.time = s.time;
+    snap.cpuPct = s.cpuPct;
+    snap.memUsedMB = s.memUsedMB;
+    snap.memTotalMB = s.memTotalMB;
+    snap.netRxBps = s.netRxBps;
+    snap.netTxBps = s.netTxBps;
+    snap.diskReadBps = s.diskReadBps;
+    snap.diskWriteBps = s.diskWriteBps;
+    snap.processCount = static_cast<int>(s.procs.size());
     logsTab->recordSnapshot(snap);
 }
