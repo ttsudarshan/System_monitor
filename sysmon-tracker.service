@@ -1,14 +1,18 @@
 [Unit]
 Description=System Monitor Screen Time Tracker
+# Start once the user session is up; the daemon itself waits for the X display
+# and picks DISPLAY/XAUTHORITY up from the session environment, so this works
+# on desktops that never reach graphical-session.target (Cinnamon, XFCE...).
 After=graphical-session.target
 
 [Service]
 Type=simple
 ExecStart=%h/.local/bin/sysmon-tracker
-Restart=on-failure
+# The daemon exits on purpose when the X server goes away (logout); come back
+# for the next session.
+Restart=always
 RestartSec=5
-Environment=DISPLAY=:0
-Environment=XAUTHORITY=%h/.Xauthority
+Nice=10
 
 [Install]
 WantedBy=default.target
