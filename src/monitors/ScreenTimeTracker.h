@@ -1,77 +1,51 @@
 #pragma once
 
+#include "core/FocusDetector.h"
+#include "core/SysmonDb.h"
+
 #include <string>
 #include <vector>
-#include <unordered_map>
-#include <cstdint>
-#include <chrono>
-#include <QtSql/QSqlDatabase>
 
-// Forward-declare Display to avoid pulling X11 headers into every TU
-// that includes this header.
-struct _XDisplay;
-typedef struct _XDisplay Display;
+struct ScreenTimeStats {
+    std::vector<AppTime> today;     // sorted by seconds desc
+    std::vector<AppTime> week;      // last 7 days including today
+    std::vector<DayTotal> last7;    // oldest first, last entry is today
+    std::vector<int> hourly;        // 24 buckets for today
+    int todaySeconds = 0;
+    int weekSeconds = 0;
+    int dailyAverageSeconds = 0;    // over days in the last 7 that have data
+    std::string currentApp;         // canonical, "" when nothing/screen off
+    std::string currentTab;
+    bool screenOff = false;
+    bool daemonRunning = false;
+    std::string source;             // "X11", "GNOME extension", ...
+};
 
+// GUI-side screen time: reads statistics from the shared database and, only
+// when the background daemon is not running, records time itself.
 class ScreenTimeTracker {
 public:
-    explicit ScreenTimeTracker(const std::string& dbPath = "", 
-                              const std::string& procPath = "/proc");
-    ~ScreenTimeTracker();
+    ScreenTimeTracker(SysmonDb &db, FocusDetector &detector);
 
-    // Call every refresh cycle (~1.5s)
-    void tick();
+    void tick(long long elapsedMs);
+    ScreenTimeStats stats() const;
 
-    struct TabTime {
-        std::string name;    // site/tab name extracted from window title
-        int seconds;
-    };
-
-    struct AppScreenTime {
-        std::string appName;
-        int todaySeconds;
-        int weekSeconds;
-        std::vector<TabTime> todayTabs;   // per-site breakdown (browsers only)
-        std::vector<TabTime> weeklyTabs;
-    };
-
-    // Today's screen time per app, sorted descending
-    std::vector<AppScreenTime> todayStats() const;
-
-    // Weekly screen time per app
-    std::vector<AppScreenTime> weeklyStats() const;
-
-    // Per-day totals for the last 7 days (for bar chart)
-    struct DailyTotal {
-        std::string date;      // YYYY-MM-DD
-        std::string dayLabel;  // "S", "M", "T", etc.
-        int seconds;
-    };
-    std::vector<DailyTotal> last7Days() const;
-
-    // Total screen time today
-    int totalTodaySeconds() const;
-    int totalWeekSeconds() const;
-    int dailyAverageSeconds() const;
-
-    // Currently focused app
-    std::string currentApp() const { return currentFocusApp; }
+    bool daemonRunning() const { return daemonRunning_; }
+    void flush();
 
 private:
-    QSqlDatabase db;
-    std::string currentFocusApp;
-    std::chrono::steady_clock::time_point lastTickTime;
+    SysmonDb &db_;
+    FocusDetector &detector_;
 
-    void initDb();
+    FocusDetector::Result current_;
+    bool daemonRunning_ = false;
+    long long lastDaemonCheckMs_ = 0;
 
-    // Returns true only when the X screen saver has actually blanked/locked
-    // the display — NOT merely because the user is idle (e.g. watching video).
-    bool isScreenBlanked(Display *dpy) const;
-    std::string getWaylandFocusedAppName();
-    std::string getFocusedAppName();
-    std::string normalizeAppName(const std::string &name);
-    std::string getBrowserTabName(const std::string &app);
-    void recordTick(const std::string &appName, const std::string &tabName, int seconds);
-    
-    std::string customDbPath;
-    std::string procRoot;
+    // Fallback accumulator (mirrors the daemon's)
+    std::string accApp_, accTab_, accDate_;
+    int accHour_ = -1;
+    long long accMs_ = 0;
+    long long lastFlushMs_ = 0;
+
+    bool checkDaemon();
 };
